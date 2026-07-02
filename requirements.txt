@@ -1,6 +1,9 @@
 fastapi==0.111.0
 uvicorn==0.30.1
 ultralytics==8.4.83
-opencv-python-headless==4.10.0.84
-numpy==1.26.4
+opencv-python==4.10.0.84
+mediapipe==0.10.14
+streamlit==1.35.0
+requests==2.32.3
 python-multipart==0.0.9
+numpy==1.26.4
