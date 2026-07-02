@@ -3,7 +3,6 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.legacy import router as legacy_router
 from api.routes import router as count_reps_router
 
 app = FastAPI(title="FitVision Pose & Rep Counting", version="3.0.0")
@@ -16,7 +15,6 @@ app.add_middleware(
 )
 
 app.include_router(count_reps_router)
-app.include_router(legacy_router)
 
 
 if __name__ == "__main__":

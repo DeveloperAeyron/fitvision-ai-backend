@@ -10,6 +10,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from rep_counter.exercises import EXERCISES
+from video.transcode import transcode_for_web
 
 PERSON_DETECTOR_PATH = "weights/pose_person_detector_f16.tflite"
 LANDMARK_MODEL_PATH = "weights/pose_landmark_detector_full_f16_inf.tflite"
@@ -62,6 +63,7 @@ def _count_reps(request: CountRepsRequest, processor, backend: str) -> CountReps
     out_fd, out_path = tempfile.mkstemp(suffix=".mp4")
     os.close(in_fd)
     os.close(out_fd)
+    web_path: str | None = None
 
     try:
         with open(in_path, "wb") as f:
@@ -69,13 +71,14 @@ def _count_reps(request: CountRepsRequest, processor, backend: str) -> CountReps
 
         result = processor.process(in_path, out_path, exercise)
 
-        with open(out_path, "rb") as f:
+        web_path = transcode_for_web(out_path)
+        with open(web_path, "rb") as f:
             encoded = base64.b64encode(f.read()).decode("utf-8")
     except RuntimeError as exc:
         raise HTTPException(400, str(exc))
     finally:
-        for path in (in_path, out_path):
-            if os.path.exists(path):
+        for path in (in_path, out_path, web_path):
+            if path and os.path.exists(path):
                 os.remove(path)
 
     return CountRepsResponse(exercise=result.exercise, reps=result.reps,
