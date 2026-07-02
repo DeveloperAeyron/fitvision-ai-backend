@@ -9,15 +9,13 @@ from functools import lru_cache
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from pose.detector import PersonDetector
-from pose.landmark import PoseLandmarker
 from rep_counter.exercises import EXERCISES
-from video.processor import VideoProcessor
 
 PERSON_DETECTOR_PATH = "weights/pose_person_detector_f16.tflite"
 LANDMARK_MODEL_PATH = "weights/pose_landmark_detector_full_f16_inf.tflite"
+MEDIAPIPE_TASK_PATH = "weights/pose_landmarker_custom.task"
 
-router = APIRouter()
+router = APIRouter(tags=["rep-counting"])
 
 
 class CountRepsRequest(BaseModel):
@@ -28,19 +26,27 @@ class CountRepsRequest(BaseModel):
 class CountRepsResponse(BaseModel):
     exercise: str
     reps: int
+    backend: str
     video: str
 
 
 @lru_cache(maxsize=1)
-def get_processor() -> VideoProcessor:
+def _tflite_processor():
     # Built once and reused; loading the interpreters per request is expensive.
-    detector = PersonDetector(PERSON_DETECTOR_PATH)
-    landmarker = PoseLandmarker(LANDMARK_MODEL_PATH)
-    return VideoProcessor(detector, landmarker)
+    from pose.detector import PersonDetector
+    from pose.landmark import PoseLandmarker
+    from video.processor import VideoProcessor
+    return VideoProcessor(PersonDetector(PERSON_DETECTOR_PATH),
+                          PoseLandmarker(LANDMARK_MODEL_PATH))
 
 
-@router.post("/count-reps", response_model=CountRepsResponse)
-def count_reps(request: CountRepsRequest) -> CountRepsResponse:
+@lru_cache(maxsize=1)
+def _mediapipe_processor():
+    from mp_pipeline import MediaPipeVideoProcessor
+    return MediaPipeVideoProcessor(MEDIAPIPE_TASK_PATH)
+
+
+def _count_reps(request: CountRepsRequest, processor, backend: str) -> CountRepsResponse:
     exercise = request.exercise.lower().strip()
     if exercise not in EXERCISES:
         raise HTTPException(400, f"Unsupported exercise. Choose from {sorted(EXERCISES)}.")
@@ -61,7 +67,7 @@ def count_reps(request: CountRepsRequest) -> CountRepsResponse:
         with open(in_path, "wb") as f:
             f.write(video_bytes)
 
-        result = get_processor().process(in_path, out_path, exercise)
+        result = processor.process(in_path, out_path, exercise)
 
         with open(out_path, "rb") as f:
             encoded = base64.b64encode(f.read()).decode("utf-8")
@@ -72,4 +78,15 @@ def count_reps(request: CountRepsRequest) -> CountRepsResponse:
             if os.path.exists(path):
                 os.remove(path)
 
-    return CountRepsResponse(exercise=result.exercise, reps=result.reps, video=encoded)
+    return CountRepsResponse(exercise=result.exercise, reps=result.reps,
+                             backend=backend, video=encoded)
+
+
+@router.post("/count-reps", response_model=CountRepsResponse)
+def count_reps(request: CountRepsRequest) -> CountRepsResponse:
+    return _count_reps(request, _tflite_processor(), "tflite")
+
+
+@router.post("/count-reps-mediapipe", response_model=CountRepsResponse)
+def count_reps_mediapipe(request: CountRepsRequest) -> CountRepsResponse:
+    return _count_reps(request, _mediapipe_processor(), "mediapipe")

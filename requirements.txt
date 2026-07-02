@@ -1,7 +1,11 @@
-# Requires Python 3.11 (TensorFlow 2.16.2 has no wheel for 3.13 on Intel macOS).
-tensorflow==2.16.2
-opencv-python==4.10.0.84
+# Requires Python 3.11 (neither TensorFlow 2.16.2 nor MediaPipe ship wheels
+# for 3.13 on Intel macOS).
+tensorflow==2.16.2          # tflite backend (tf.lite.Interpreter)
+mediapipe==0.10.14          # mediapipe backend (Tasks PoseLandmarker)
+opencv-contrib-python==4.10.0.84  # superset of opencv-python; MediaPipe-compatible
 fastapi==0.111.0
 uvicorn==0.30.1
 python-multipart==0.0.9
+# Pinned so TensorFlow and MediaPipe coexist (MediaPipe otherwise pulls numpy>=2).
 numpy==1.26.4
+ml_dtypes==0.3.2
