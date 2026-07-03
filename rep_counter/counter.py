@@ -1,5 +1,5 @@
-from __future__ import annotations
-
+import os
+import pickle
 from typing import Dict, List, Optional, Tuple
 
 from .angles import calculate_angle
@@ -25,6 +25,21 @@ class RepCounter:
         self._lo: Optional[float] = None
         self._hi: Optional[float] = None
         self._smooth_buf: List[float] = []
+
+        # Load ML pose classifier model if it exists
+        self.model_loaded = False
+        model_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "weights", "pose_classifier.pkl")
+        if os.path.exists(model_path):
+            try:
+                with open(model_path, "rb") as f:
+                    data = pickle.load(f)
+                    self.clf = data["model"]
+                    self.clf_type = data["model_type"]
+                    self.clf_classes = data["classes"]
+                    self.model_loaded = True
+                    print(f"Loaded {self.clf_type} pose classifier successfully from {model_path}!")
+            except Exception as e:
+                print("Failed to load pose classifier, falling back to heuristics:", e)
 
     def _measure_angle(self, landmarks: Dict[str, Tuple[float, float, float]]) -> Optional[float]:
         angles: List[float] = []
@@ -147,8 +162,76 @@ class RepCounter:
 
         return True
 
+    def _extract_features(self, landmarks: Dict[str, Tuple[float, float, float]]) -> List[float]:
+        # Extract features matching the 7 feature columns of train_classifier.py
+        left_elbow = calculate_angle(landmarks["left_shoulder"], landmarks["left_elbow"], landmarks["left_wrist"]) if "left_shoulder" in landmarks and "left_elbow" in landmarks and "left_wrist" in landmarks else 180.0
+        right_elbow = calculate_angle(landmarks["right_shoulder"], landmarks["right_elbow"], landmarks["right_wrist"]) if "right_shoulder" in landmarks and "right_elbow" in landmarks and "right_wrist" in landmarks else 180.0
+
+        left_knee = calculate_angle(landmarks["left_hip"], landmarks["left_knee"], landmarks["left_ankle"]) if "left_hip" in landmarks and "left_knee" in landmarks and "left_ankle" in landmarks else 180.0
+        right_knee = calculate_angle(landmarks["right_hip"], landmarks["right_knee"], landmarks["right_ankle"]) if "right_hip" in landmarks and "right_knee" in landmarks and "right_ankle" in landmarks else 180.0
+
+        left_hip = calculate_angle(landmarks["left_shoulder"], landmarks["left_hip"], landmarks["left_knee"]) if "left_shoulder" in landmarks and "left_hip" in landmarks and "left_knee" in landmarks else 180.0
+        right_hip = calculate_angle(landmarks["right_shoulder"], landmarks["right_hip"], landmarks["right_knee"]) if "right_shoulder" in landmarks and "right_hip" in landmarks and "right_knee" in landmarks else 180.0
+
+        # Bounding box aspect ratio
+        important_landmarks = [
+            "left_shoulder", "right_shoulder",
+            "left_elbow", "right_elbow",
+            "left_wrist", "right_wrist",
+            "left_hip", "right_hip",
+            "left_knee", "right_knee",
+            "left_ankle", "right_ankle"
+        ]
+        xs = []
+        ys = []
+        for key in important_landmarks:
+            if key in landmarks and landmarks[key][2] >= self.visibility_threshold:
+                xs.append(landmarks[key][0])
+                ys.append(landmarks[key][1])
+        if not xs or not ys:
+            bbox_ratio = 1.0
+        else:
+            width = max(xs) - min(xs)
+            height = max(ys) - min(ys)
+            bbox_ratio = height / (width + 1e-5)
+
+        return [left_elbow, right_elbow, left_knee, right_knee, left_hip, right_hip, bbox_ratio]
+
     def update(self, landmarks: Dict[str, Tuple[float, float, float]],
                frame_height: Optional[int] = None) -> int:
+        if not self._is_pose_valid(landmarks):
+            return self.rep_count
+
+        if self.model_loaded:
+            try:
+                features = self._extract_features(landmarks)
+                
+                # Silence sklearn UserWarning about feature names
+                import warnings
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", category=UserWarning)
+                    pred = self.clf.predict([features])[0]
+
+                # We filter by exercise type (e.g. only care about 'pushup_up'/'pushup_down' if exercise is pushup)
+                prefix = f"{self.config.name}_"
+                if pred.startswith(prefix):
+                    state = pred[len(prefix):]
+                    if state == "down":
+                        self.current_state = "down"
+                    elif state == "up" and self.current_state == "down":
+                        self.rep_count += 1
+                        self.current_state = "up"
+
+                # Keep last_angle updated for UI annotations
+                raw = self._measure(landmarks, frame_height)
+                if raw is not None:
+                    self.last_angle = self._smooth(raw)
+
+                self.previous_state = self.current_state
+                return self.rep_count
+            except Exception as e:
+                print("Model prediction error, falling back to heuristics:", e)
+
         if not self._is_pose_valid(landmarks):
             return self.rep_count
 

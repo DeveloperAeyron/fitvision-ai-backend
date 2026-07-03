@@ -32,9 +32,9 @@ EXERCISES = {
             ("left_shoulder", "left_elbow", "left_wrist"),
             ("right_shoulder", "right_elbow", "right_wrist"),
         ],
-        min_range=15.0,
-        enter_frac=0.55,
-        exit_frac=0.45,
+        min_range=8.0,
+        enter_frac=0.65,
+        exit_frac=0.55,
     ),
     "squat": ExerciseConfig(
         name="squat",
