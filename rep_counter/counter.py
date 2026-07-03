@@ -118,9 +118,9 @@ class RepCounter:
                 return False
 
         elif self.config.name == "pushup":
-            # Pushups require horizontal body orientation (bbox_ratio <= 1.2)
-            # Both side-profile and head-on/rear-on push-ups fall within this range
-            if bbox_ratio > 1.2:
+            # Pushups require horizontal/semi-horizontal body orientation (bbox_ratio <= 1.5)
+            # Both side-profile and head-on pushups (especially with straight arms) fall within this range
+            if bbox_ratio > 1.5:
                 return False
 
             # Verify that hips are not deeply bent (e.g. sit-up position)
@@ -141,8 +141,8 @@ class RepCounter:
                     return False
 
         elif self.config.name == "situp":
-            # Situps require a horizontal or semi-seated aspect ratio
-            if bbox_ratio > 1.3:
+            # Situps require a horizontal or semi-seated aspect ratio (bbox_ratio <= 1.5)
+            if bbox_ratio > 1.5:
                 return False
 
         return True
