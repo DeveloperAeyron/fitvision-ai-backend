@@ -40,7 +40,7 @@ class MediaPipeVideoProcessor:
 
                 landmarks = landmarker.estimate(frame, timestamp_ms)
                 if landmarks is not None:
-                    counter.update(landmarks_to_dict(landmarks))
+                    counter.update(landmarks_to_dict(landmarks), frame_height=height)
 
                 annotate_frame(frame, landmarks, counter.rep_count,
                                exercise, counter.last_angle)

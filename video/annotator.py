@@ -29,6 +29,9 @@ def annotate_frame(frame, landmarks: Optional[np.ndarray], rep_count: int,
 
     label = exercise.upper()
     if angle is not None:
-        label += f"  {angle:.0f}deg"
+        if exercise.lower() == "squat" and angle <= 2.0:
+            label += f"  {angle * 100:.0f}% depth"
+        else:
+            label += f"  {angle:.0f}deg"
     cv2.putText(frame, label, (20, 40), font, 0.8, (255, 255, 255), 2, cv2.LINE_AA)
     return frame
