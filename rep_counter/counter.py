@@ -28,7 +28,8 @@ class RepCounter:
 
         # Load ML pose classifier model if it exists
         self.model_loaded = False
-        model_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "weights", "pose_classifier.pkl")
+        model_name = f"pose_classifier_{self.config.name}.pkl"
+        model_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "weights", model_name)
         if os.path.exists(model_path):
             try:
                 with open(model_path, "rb") as f:
@@ -36,10 +37,11 @@ class RepCounter:
                     self.clf = data["model"]
                     self.clf_type = data["model_type"]
                     self.clf_classes = data["classes"]
+                    self.clf_features = data.get("features", ["left_elbow", "right_elbow", "left_knee", "right_knee", "left_hip", "right_hip", "bbox_ratio"])
                     self.model_loaded = True
-                    print(f"Loaded {self.clf_type} pose classifier successfully from {model_path}!")
+                    print(f"Loaded {self.clf_type} pose classifier successfully for '{self.config.name}' from {model_path}!")
             except Exception as e:
-                print("Failed to load pose classifier, falling back to heuristics:", e)
+                print(f"Failed to load pose classifier for '{self.config.name}', falling back to heuristics:", e)
 
     def _measure_angle(self, landmarks: Dict[str, Tuple[float, float, float]]) -> Optional[float]:
         angles: List[float] = []
@@ -195,7 +197,17 @@ class RepCounter:
             height = max(ys) - min(ys)
             bbox_ratio = height / (width + 1e-5)
 
-        return [left_elbow, right_elbow, left_knee, right_knee, left_hip, right_hip, bbox_ratio]
+        all_feats = {
+            "left_elbow": left_elbow,
+            "right_elbow": right_elbow,
+            "left_knee": left_knee,
+            "right_knee": right_knee,
+            "left_hip": left_hip,
+            "right_hip": right_hip,
+            "bbox_ratio": bbox_ratio
+        }
+
+        return [all_feats[f] for f in self.clf_features]
 
     def update(self, landmarks: Dict[str, Tuple[float, float, float]],
                frame_height: Optional[int] = None) -> int:
@@ -212,15 +224,12 @@ class RepCounter:
                     warnings.simplefilter("ignore", category=UserWarning)
                     pred = self.clf.predict([features])[0]
 
-                # We filter by exercise type (e.g. only care about 'pushup_up'/'pushup_down' if exercise is pushup)
-                prefix = f"{self.config.name}_"
-                if pred.startswith(prefix):
-                    state = pred[len(prefix):]
-                    if state == "down":
-                        self.current_state = "down"
-                    elif state == "up" and self.current_state == "down":
-                        self.rep_count += 1
-                        self.current_state = "up"
+                # The classifier output states are direct: 'up', 'down', 'transition'
+                if pred == "down":
+                    self.current_state = "down"
+                elif pred == "up" and self.current_state == "down":
+                    self.rep_count += 1
+                    self.current_state = "up"
 
                 # Keep last_angle updated for UI annotations
                 raw = self._measure(landmarks, frame_height)
@@ -231,9 +240,6 @@ class RepCounter:
                 return self.rep_count
             except Exception as e:
                 print("Model prediction error, falling back to heuristics:", e)
-
-        if not self._is_pose_valid(landmarks):
-            return self.rep_count
 
         raw = self._measure(landmarks, frame_height)
         if raw is None:
