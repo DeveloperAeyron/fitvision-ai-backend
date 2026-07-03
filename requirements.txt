@@ -9,3 +9,10 @@ python-multipart==0.0.9
 # Pinned so TensorFlow and MediaPipe coexist (MediaPipe otherwise pulls numpy>=2).
 numpy==1.26.4
 ml_dtypes==0.3.2
+
+# Database and Auth
+SQLAlchemy==2.0.31
+asyncpg==0.29.0
+passlib[bcrypt]==1.7.4
+PyJWT==2.8.0
+cryptography==42.0.8

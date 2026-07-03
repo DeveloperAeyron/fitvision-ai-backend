@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.routes import router as count_reps_router
+from api.auth_routes import router as auth_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -14,6 +15,14 @@ logging.basicConfig(
 )
 
 app = FastAPI(title="FitVision Pose & Rep Counting", version="3.0.0")
+
+
+@app.on_event("startup")
+async def create_db_tables():
+    from api.database import Base, engine
+    from api.models import User
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
 
 
 @app.on_event("startup")
@@ -35,6 +44,7 @@ app.add_middleware(
 )
 
 app.include_router(count_reps_router)
+app.include_router(auth_router)
 
 
 if __name__ == "__main__":

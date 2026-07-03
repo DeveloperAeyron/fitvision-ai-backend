@@ -13,7 +13,7 @@ class RepCounter:
     # angle's range of motion on the fly and places hysteresis thresholds
     # relative to it, so it adapts to camera view and exercise automatically.
     def __init__(self, exercise: str = "pushup", visibility_threshold: float = 0.3,
-                 envelope_decay: float = 0.01):
+                 envelope_decay: float = 0.02):
         self.config = get_exercise(exercise)
         self.visibility_threshold = visibility_threshold
         self.envelope_decay = envelope_decay
@@ -78,8 +78,76 @@ class RepCounter:
             return self._measure_hip_drop(landmarks, frame_height)
         return self._measure_angle(landmarks)
 
+    def _is_pose_valid(self, landmarks: Dict[str, Tuple[float, float, float]]) -> bool:
+        # Check torso orientation using whichever side of the body is more visible (supports side views)
+        has_left = ("left_shoulder" in landmarks and "left_hip" in landmarks and
+                    landmarks["left_shoulder"][2] >= self.visibility_threshold and
+                    landmarks["left_hip"][2] >= self.visibility_threshold)
+
+        has_right = ("right_shoulder" in landmarks and "right_hip" in landmarks and
+                     landmarks["right_shoulder"][2] >= self.visibility_threshold and
+                     landmarks["right_hip"][2] >= self.visibility_threshold)
+
+        if not (has_left or has_right):
+            return False
+
+        if has_left and has_right:
+            sh_x = (landmarks["left_shoulder"][0] + landmarks["right_shoulder"][0]) / 2.0
+            sh_y = (landmarks["left_shoulder"][1] + landmarks["right_shoulder"][1]) / 2.0
+            hip_x = (landmarks["left_hip"][0] + landmarks["right_hip"][0]) / 2.0
+            hip_y = (landmarks["left_hip"][1] + landmarks["right_hip"][1]) / 2.0
+        elif has_left:
+            sh_x, sh_y, _ = landmarks["left_shoulder"]
+            hip_x, hip_y, _ = landmarks["left_hip"]
+        else:
+            sh_x, sh_y, _ = landmarks["right_shoulder"]
+            hip_x, hip_y, _ = landmarks["right_hip"]
+
+        dx = abs(sh_x - hip_x)
+        dy = abs(sh_y - hip_y)
+        ratio = dy / (dx + 1e-5)
+
+        if self.config.name == "squat":
+            # Squats require vertical body orientation (dy/dx >= 0.8)
+            # Prevent pushups or situps (horizontal body) from counting
+            if ratio < 0.8:
+                return False
+
+        elif self.config.name == "pushup":
+            # Pushups require horizontal body orientation (dy/dx <= 1.0)
+            # Prevent standing/sitting exercises from counting
+            if ratio > 1.0:
+                return False
+
+            # For pushups, verify that hips are not deeply bent (e.g. situp position)
+            hip_angles = []
+            for side in ("left", "right"):
+                sh = f"{side}_shoulder"
+                hp = f"{side}_hip"
+                kn = f"{side}_knee"
+                if (sh in landmarks and hp in landmarks and kn in landmarks and
+                    landmarks[sh][2] >= self.visibility_threshold and
+                    landmarks[hp][2] >= self.visibility_threshold and
+                    landmarks[kn][2] >= self.visibility_threshold):
+                    angle = calculate_angle(landmarks[sh], landmarks[hp], landmarks[kn])
+                    hip_angles.append(angle)
+            if hip_angles:
+                avg_hip_angle = sum(hip_angles) / len(hip_angles)
+                if avg_hip_angle < 110.0:
+                    return False
+
+        elif self.config.name == "situp":
+            # Situps start horizontal and rise up, but should not be completely vertical/standing
+            if ratio > 2.2:
+                return False
+
+        return True
+
     def update(self, landmarks: Dict[str, Tuple[float, float, float]],
                frame_height: Optional[int] = None) -> int:
+        if not self._is_pose_valid(landmarks):
+            return self.rep_count
+
         raw = self._measure(landmarks, frame_height)
         if raw is None:
             return self.rep_count
