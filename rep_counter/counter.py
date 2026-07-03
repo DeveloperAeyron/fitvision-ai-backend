@@ -79,47 +79,51 @@ class RepCounter:
         return self._measure_angle(landmarks)
 
     def _is_pose_valid(self, landmarks: Dict[str, Tuple[float, float, float]]) -> bool:
-        # Check torso orientation using whichever side of the body is more visible (supports side views)
-        has_left = ("left_shoulder" in landmarks and "left_hip" in landmarks and
-                    landmarks["left_shoulder"][2] >= self.visibility_threshold and
-                    landmarks["left_hip"][2] >= self.visibility_threshold)
+        # Get all visible key body landmarks (excluding face to prevent facial jitter from affecting bbox)
+        important_landmarks = [
+            "left_shoulder", "right_shoulder",
+            "left_elbow", "right_elbow",
+            "left_wrist", "right_wrist",
+            "left_hip", "right_hip",
+            "left_knee", "right_knee",
+            "left_ankle", "right_ankle"
+        ]
+        xs = []
+        ys = []
+        for key in important_landmarks:
+            if key in landmarks and landmarks[key][2] >= self.visibility_threshold:
+                xs.append(landmarks[key][0])
+                ys.append(landmarks[key][1])
 
-        has_right = ("right_shoulder" in landmarks and "right_hip" in landmarks and
-                     landmarks["right_shoulder"][2] >= self.visibility_threshold and
-                     landmarks["right_hip"][2] >= self.visibility_threshold)
-
-        if not (has_left or has_right):
+        if not xs or not ys:
             return False
 
-        if has_left and has_right:
-            sh_x = (landmarks["left_shoulder"][0] + landmarks["right_shoulder"][0]) / 2.0
-            sh_y = (landmarks["left_shoulder"][1] + landmarks["right_shoulder"][1]) / 2.0
-            hip_x = (landmarks["left_hip"][0] + landmarks["right_hip"][0]) / 2.0
-            hip_y = (landmarks["left_hip"][1] + landmarks["right_hip"][1]) / 2.0
-        elif has_left:
-            sh_x, sh_y, _ = landmarks["left_shoulder"]
-            hip_x, hip_y, _ = landmarks["left_hip"]
-        else:
-            sh_x, sh_y, _ = landmarks["right_shoulder"]
-            hip_x, hip_y, _ = landmarks["right_hip"]
+        width = max(xs) - min(xs)
+        height = max(ys) - min(ys)
+        bbox_ratio = height / (width + 1e-5)
 
-        dx = abs(sh_x - hip_x)
-        dy = abs(sh_y - hip_y)
-        ratio = dy / (dx + 1e-5)
+        # Calculate average shoulder and hip vertical positions (y-coordinates)
+        sh_y_list = [landmarks[k][1] for k in ("left_shoulder", "right_shoulder") if k in landmarks and landmarks[k][2] >= self.visibility_threshold]
+        hip_y_list = [landmarks[k][1] for k in ("left_hip", "right_hip") if k in landmarks and landmarks[k][2] >= self.visibility_threshold]
+        sh_y = sum(sh_y_list) / len(sh_y_list) if sh_y_list else 0.0
+        hip_y = sum(hip_y_list) / len(hip_y_list) if hip_y_list else 0.0
 
         if self.config.name == "squat":
-            # Squats require vertical body orientation (dy/dx >= 0.8)
-            # Prevent pushups or situps (horizontal body) from counting
-            if ratio < 0.8:
+            # Squats require vertical body aspect ratio (bbox_ratio >= 1.3)
+            # and shoulders to be vertically above hips (sh_y < hip_y in screen coordinates)
+            # This completely blocks head-on/rear-on push-ups from registering as squats
+            if bbox_ratio < 1.3:
+                return False
+            if sh_y_list and hip_y_list and sh_y > hip_y:
                 return False
 
         elif self.config.name == "pushup":
-            # Pushups require horizontal body orientation (dy/dx <= 1.0)
-            # Prevent standing/sitting exercises from counting
-            if ratio > 1.0:
+            # Pushups require horizontal body orientation (bbox_ratio <= 1.2)
+            # Both side-profile and head-on/rear-on push-ups fall within this range
+            if bbox_ratio > 1.2:
                 return False
 
-            # For pushups, verify that hips are not deeply bent (e.g. situp position)
+            # Verify that hips are not deeply bent (e.g. sit-up position)
             hip_angles = []
             for side in ("left", "right"):
                 sh = f"{side}_shoulder"
@@ -137,8 +141,8 @@ class RepCounter:
                     return False
 
         elif self.config.name == "situp":
-            # Situps start horizontal and rise up, but should not be completely vertical/standing
-            if ratio > 2.2:
+            # Situps require a horizontal or semi-seated aspect ratio
+            if bbox_ratio > 1.3:
                 return False
 
         return True
