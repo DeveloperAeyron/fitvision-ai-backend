@@ -25,6 +25,8 @@ class RepCounter:
         self._lo: Optional[float] = None
         self._hi: Optional[float] = None
         self._smooth_buf: List[float] = []
+        self.pred_history: List[str] = []
+        self.frames_since_last_rep = 99
 
         # Load ML pose classifier model if it exists
         self.model_loaded = False
@@ -224,11 +226,25 @@ class RepCounter:
                     warnings.simplefilter("ignore", category=UserWarning)
                     pred = self.clf.predict([features])[0]
 
+                # 1. Rolling window of predictions (size 5) to smooth out frame jitters
+                self.pred_history.append(pred)
+                if len(self.pred_history) > 5:
+                    self.pred_history.pop(0)
+
+                # Take majority vote (mode)
+                from collections import Counter
+                smoothed_pred = Counter(self.pred_history).most_common(1)[0][0]
+
+                self.frames_since_last_rep += 1
+
                 # The classifier output states are direct: 'up', 'down', 'transition'
-                if pred == "down":
+                if smoothed_pred == "down":
                     self.current_state = "down"
-                elif pred == "up" and self.current_state == "down":
-                    self.rep_count += 1
+                elif smoothed_pred == "up" and self.current_state == "down":
+                    # Enforce a minimum cooldown of 15 frames (~0.5s at 30fps) between counted reps
+                    if self.frames_since_last_rep >= 15:
+                        self.rep_count += 1
+                        self.frames_since_last_rep = 0
                     self.current_state = "up"
 
                 # Keep last_angle updated for UI annotations
