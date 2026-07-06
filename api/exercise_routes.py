@@ -1,0 +1,163 @@
+import json
+from datetime import datetime
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+
+from api.database import get_db
+from api.models import User, Exercise
+from api.schemas import ExerciseCreate, ExerciseUpdate, ExerciseResponse
+from api.auth import get_current_user
+
+router = APIRouter(prefix="/exercises", tags=["exercises"])
+
+
+def to_exercise_response(model: Exercise) -> ExerciseResponse:
+    # Safely decode muscles_worked_pct JSON string
+    muscles = {}
+    if model.muscles_worked_pct:
+        try:
+            muscles = json.loads(model.muscles_worked_pct)
+        except Exception:
+            pass
+
+    # Parse suggested_workouts from comma-separated string
+    workouts = []
+    if model.suggested_workouts:
+        workouts = [w.strip() for w in model.suggested_workouts.split(",") if w.strip()]
+
+    # Parse instructions from newline-separated string
+    instructions_list = []
+    if model.instructions:
+        instructions_list = [i.strip() for i in model.instructions.split("\n") if i.strip()]
+
+    # Parse safety_tips from newline-separated string
+    tips_list = []
+    if model.safety_tips:
+        tips_list = [t.strip() for t in model.safety_tips.split("\n") if t.strip()]
+
+    return ExerciseResponse(
+        id=model.id,
+        title=model.title,
+        primary_muscle=model.primary_muscle,
+        exercise_type=model.exercise_type,
+        video_url=model.video_url,
+        muscles_worked_pct=muscles,
+        suggested_workouts=workouts,
+        instructions=instructions_list,
+        safety_tips=tips_list,
+        created_at=model.created_at
+    )
+
+
+@router.get("", response_model=list[ExerciseResponse])
+async def get_exercises(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Exercise).order_by(Exercise.title))
+    exercises = result.scalars().all()
+    return [to_exercise_response(e) for e in exercises]
+
+
+@router.get("/{exercise_id}", response_model=ExerciseResponse)
+async def get_exercise(exercise_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Exercise).where(Exercise.id == exercise_id))
+    exercise = result.scalars().first()
+    if not exercise:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Exercise not found"
+        )
+    return to_exercise_response(exercise)
+
+
+@router.post("", response_model=ExerciseResponse, status_code=status.HTTP_201_CREATED)
+async def create_exercise(
+    request: ExerciseCreate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    # Check if name/title already exists
+    existing_result = await db.execute(select(Exercise).where(Exercise.title == request.title))
+    if existing_result.scalars().first():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="An exercise with this title already exists."
+        )
+
+    # Serialize helpers
+    muscles_str = json.dumps(request.muscles_worked_pct) if request.muscles_worked_pct else None
+    workouts_str = ",".join(request.suggested_workouts) if request.suggested_workouts else None
+    instructions_str = "\n".join(request.instructions) if request.instructions else None
+    tips_str = "\n".join(request.safety_tips) if request.safety_tips else None
+
+    new_exercise = Exercise(
+        title=request.title,
+        primary_muscle=request.primary_muscle,
+        exercise_type=request.exercise_type,
+        video_url=request.video_url,
+        muscles_worked_pct=muscles_str,
+        suggested_workouts=workouts_str,
+        instructions=instructions_str,
+        safety_tips=tips_str
+    )
+    db.add(new_exercise)
+    await db.commit()
+    await db.refresh(new_exercise)
+    return to_exercise_response(new_exercise)
+
+
+@router.put("/{exercise_id}", response_model=ExerciseResponse)
+async def update_exercise(
+    exercise_id: int,
+    request: ExerciseUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(select(Exercise).where(Exercise.id == exercise_id))
+    exercise = result.scalars().first()
+    if not exercise:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Exercise not found"
+        )
+
+    # Check title uniqueness if title changed
+    if exercise.title != request.title:
+        title_check = await db.execute(select(Exercise).where(Exercise.title == request.title))
+        if title_check.scalars().first():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Another exercise with this title already exists."
+            )
+
+    # Serialize update helpers
+    exercise.title = request.title
+    exercise.primary_muscle = request.primary_muscle
+    exercise.exercise_type = request.exercise_type
+    exercise.video_url = request.video_url
+    exercise.muscles_worked_pct = json.dumps(request.muscles_worked_pct) if request.muscles_worked_pct else None
+    exercise.suggested_workouts = ",".join(request.suggested_workouts) if request.suggested_workouts else None
+    exercise.instructions = "\n".join(request.instructions) if request.instructions else None
+    exercise.safety_tips = "\n".join(request.safety_tips) if request.safety_tips else None
+
+    await db.commit()
+    await db.refresh(exercise)
+    return to_exercise_response(exercise)
+
+
+@router.delete("/{exercise_id}", status_code=status.HTTP_200_OK)
+async def delete_exercise(
+    exercise_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(select(Exercise).where(Exercise.id == exercise_id))
+    exercise = result.scalars().first()
+    if not exercise:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Exercise not found"
+        )
+
+    await db.delete(exercise)
+    await db.commit()
+    return {"message": "Exercise deleted successfully"}

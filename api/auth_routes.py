@@ -28,6 +28,8 @@ from api.schemas import (
     GoogleLoginRequest,
     DashboardResponse,
     WorkoutLogCreate,
+    GoalCreateRequest,
+    GoalResponse,
 )
 from api.auth import (
     hash_password,
@@ -476,6 +478,168 @@ async def log_workout(
     await db.commit()
     await db.refresh(new_log)
     return {"message": "Workout logged successfully", "id": new_log.id}
+
+
+import json
+
+def generate_workout_and_nutrition_plans(fitness_goal: str, activity_level: str):
+    goal = fitness_goal.lower().strip()
+    level = activity_level.lower().strip()
+    
+    workout_plan = []
+    nutrition_plan = {}
+
+    if "loss" in goal or "weight" in goal:
+        workout_plan = [
+            {"day": "Monday", "workout_name": "HIIT Fat Burner", "duration_minutes": 30, "exercises": ["jumping jacks", "mountain climbers", "burpees"]},
+            {"day": "Wednesday", "workout_name": "Full Body Resistance", "duration_minutes": 40, "exercises": ["pushups", "bodyweight squats", "lunges"]},
+            {"day": "Friday", "workout_name": "Steady State Cardio", "duration_minutes": 45, "exercises": ["running/brisk walk", "cycling"]}
+        ]
+        cal = 1600 if "sedentary" in level else (1800 if "light" in level else 2000)
+        nutrition_plan = {
+            "daily_calories": cal,
+            "macronutrients": {"protein_g": 135, "carbs_g": 165, "fats_g": 55},
+            "meal_suggestions": {
+                "breakfast": "Egg white omelet with spinach and 1 slice whole wheat toast",
+                "lunch": "Mixed greens salad with 150g grilled chicken breast and light dressing",
+                "dinner": "150g baked white fish with steamed broccoli and half a cup of quinoa"
+            }
+        }
+    elif "gain" in goal or "muscle" in goal or "hypertrophy" in goal:
+        workout_plan = [
+            {"day": "Monday", "workout_name": "Push Day (Chest/Triceps)", "duration_minutes": 50, "exercises": ["bench press/pushups", "overhead press", "tricep extensions"]},
+            {"day": "Wednesday", "workout_name": "Pull Day (Back/Biceps)", "duration_minutes": 50, "exercises": ["pullups/rows", "lat pulldowns", "bicep curls"]},
+            {"day": "Friday", "workout_name": "Leg Day (Quads/Hamstrings)", "duration_minutes": 60, "exercises": ["barbell squats", "romanian deadlifts", "calf raises"]}
+        ]
+        cal = 2400 if "sedentary" in level else (2700 if "light" in level else 3000)
+        nutrition_plan = {
+            "daily_calories": cal,
+            "macronutrients": {"protein_g": 160, "carbs_g": 350, "fats_g": 80},
+            "meal_suggestions": {
+                "breakfast": "Oatmeal (1 cup) with 2 scoops protein powder, peanut butter, and banana",
+                "lunch": "200g lean beef mince with 1.5 cups white jasmine rice and green beans",
+                "dinner": "200g grilled salmon filet with large sweet potato and roasted asparagus"
+            }
+        }
+    else:
+        workout_plan = [
+            {"day": "Tuesday", "workout_name": "Aerobic Capacity", "duration_minutes": 45, "exercises": ["jogging", "cycling", "stretching"]},
+            {"day": "Thursday", "workout_name": "Muscular Endurance Circuit", "duration_minutes": 35, "exercises": ["high-rep pushups", "high-rep bodyweight squats", "plank hold"]},
+            {"day": "Saturday", "workout_name": "Active Recovery / Mobility", "duration_minutes": 30, "exercises": ["yoga", "foam rolling"]}
+        ]
+        cal = 1800 if "sedentary" in level else (2100 if "light" in level else 2400)
+        nutrition_plan = {
+            "daily_calories": cal,
+            "macronutrients": {"protein_g": 120, "carbs_g": 260, "fats_g": 60},
+            "meal_suggestions": {
+                "breakfast": "Greek yogurt bowl with honey, chia seeds, and mixed berries",
+                "lunch": "Turkey breast wrap with whole wheat tortilla, avocado, lettuce, and tomatoes",
+                "dinner": "Grilled chicken breast with large portion of roasted Mediterranean vegetables"
+            }
+        }
+
+    return workout_plan, nutrition_plan
+
+
+def to_goal_response(model: UserGoal) -> dict:
+    w_plan = []
+    n_plan = {}
+    if model.workout_plan:
+        try:
+            w_plan = json.loads(model.workout_plan)
+        except Exception:
+            pass
+    if model.nutrition_plan:
+        try:
+            n_plan = json.loads(model.nutrition_plan)
+        except Exception:
+            pass
+    
+    if not w_plan:
+        w_plan, n_plan = generate_workout_and_nutrition_plans(
+            model.fitness_goal or "General Health",
+            model.activity_level or "Active"
+        )
+
+    return {
+        "id": model.id,
+        "target_workouts": model.target_workouts,
+        "target_reps": model.target_reps,
+        "target_calories": model.target_calories,
+        "fitness_goal": model.fitness_goal or "General Health",
+        "activity_level": model.activity_level or "Active",
+        "workout_plan": w_plan,
+        "nutrition_plan": n_plan,
+        "created_at": datetime.utcnow()
+    }
+
+
+@router.post("/goals", response_model=GoalResponse)
+async def create_user_goal(
+    request: GoalCreateRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    goal_res = await db.execute(select(UserGoal).where(UserGoal.user_id == current_user.id))
+    user_goal = goal_res.scalars().first()
+
+    workout_plan, nutrition_plan = generate_workout_and_nutrition_plans(
+        request.fitness_goal, request.activity_level
+    )
+
+    w_str = json.dumps(workout_plan)
+    n_str = json.dumps(nutrition_plan)
+
+    if not user_goal:
+        user_goal = UserGoal(
+            user_id=current_user.id,
+            target_workouts=request.target_workouts,
+            target_reps=request.target_reps,
+            target_calories=request.target_calories,
+            fitness_goal=request.fitness_goal,
+            activity_level=request.activity_level,
+            workout_plan=w_str,
+            nutrition_plan=n_str
+        )
+        db.add(user_goal)
+    else:
+        user_goal.target_workouts = request.target_workouts
+        user_goal.target_reps = request.target_reps
+        user_goal.target_calories = request.target_calories
+        user_goal.fitness_goal = request.fitness_goal
+        user_goal.activity_level = request.activity_level
+        user_goal.workout_plan = w_str
+        user_goal.nutrition_plan = n_str
+
+    await db.commit()
+    await db.refresh(user_goal)
+    return to_goal_response(user_goal)
+
+
+@router.get("/goals", response_model=GoalResponse)
+async def get_user_goal(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    goal_res = await db.execute(select(UserGoal).where(UserGoal.user_id == current_user.id))
+    user_goal = goal_res.scalars().first()
+    if not user_goal:
+        workout_plan, nutrition_plan = generate_workout_and_nutrition_plans("General Health", "Active")
+        user_goal = UserGoal(
+            user_id=current_user.id,
+            target_workouts=15,
+            target_reps=1800,
+            target_calories=8000,
+            fitness_goal="General Health",
+            activity_level="Active",
+            workout_plan=json.dumps(workout_plan),
+            nutrition_plan=json.dumps(nutrition_plan)
+        )
+        db.add(user_goal)
+        await db.commit()
+        await db.refresh(user_goal)
+
+    return to_goal_response(user_goal)
 
 
 

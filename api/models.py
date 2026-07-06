@@ -33,6 +33,11 @@ class UserGoal(Base):
     target_workouts: Mapped[int] = mapped_column(default=15, nullable=False)
     target_reps: Mapped[int] = mapped_column(default=1800, nullable=False)
     target_calories: Mapped[int] = mapped_column(default=8000, nullable=False)
+    fitness_goal: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    activity_level: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    workout_plan: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    nutrition_plan: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+
 
 
 class WorkoutLog(Base):
@@ -45,5 +50,21 @@ class WorkoutLog(Base):
     calories: Mapped[int] = mapped_column(default=0, nullable=False)
     duration_minutes: Mapped[int] = mapped_column(default=0, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class Exercise(Base):
+    __tablename__ = "exercises"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    title: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
+    primary_muscle: Mapped[str] = mapped_column(String(100), nullable=False)
+    exercise_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    video_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    muscles_worked_pct: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    suggested_workouts: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    instructions: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    safety_tips: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
 
 

@@ -461,6 +461,7 @@
             <button class="tab-btn active" onclick="switchTab('authTab')">👤 Sign In & Up</button>
             <button class="tab-btn" onclick="switchTab('googleTab')">🔑 Google Login</button>
             <button class="tab-btn" onclick="switchTab('forgotTab')">🔒 Password Reset</button>
+            <button class="tab-btn" onclick="switchTab('goalsTab')">🎯 Fitness Goals</button>
             <button class="tab-btn" onclick="switchTab('dashboardTab')">📊 Dashboard</button>
             <button class="tab-btn" onclick="switchTab('workoutsTab')">🏋️ Log Workouts</button>
         </div>
@@ -624,6 +625,86 @@
                 </div>
                 <div id="dashError" style="color: var(--error-color); text-align: center; margin-top: 1rem;">
                     Sign in to retrieve actual metrics database logs.
+                </div>
+            </div>
+
+            <!-- Goals tab -->
+            <div id="goalsTab" class="tab-panel">
+                <h2>🎯 Personal Fitness Goals & Planner</h2>
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label for="goalWorkouts">Target Workouts (per week)</label>
+                        <input type="number" id="goalWorkouts" value="15">
+                    </div>
+                    <div class="input-group">
+                        <label for="goalReps">Target Reps (per week)</label>
+                        <input type="number" id="goalReps" value="1800">
+                    </div>
+                    <div class="input-group">
+                        <label for="goalCalories">Target Calories (per week)</label>
+                        <input type="number" id="goalCalories" value="8000">
+                    </div>
+                    <div class="input-group">
+                        <label for="fitnessGoal">Fitness Goal</label>
+                        <select id="fitnessGoal">
+                            <option value="Weight Loss">Weight Loss</option>
+                            <option value="Muscle Gain">Muscle Gain</option>
+                            <option value="Endurance">Endurance & Stamina</option>
+                            <option value="General Health">General Health</option>
+                        </select>
+                    </div>
+                    <div class="input-group full-width">
+                        <label for="activityLevel">Activity Level</label>
+                        <select id="activityLevel">
+                            <option value="Sedentary">Sedentary (desk job, little exercise)</option>
+                            <option value="Lightly Active">Lightly Active (light exercise 1-3 days/week)</option>
+                            <option value="Active">Active (moderate exercise 3-5 days/week)</option>
+                            <option value="Very Active">Very Active (hard exercise 6-7 days/week)</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="margin-bottom: 2rem;">
+                    <button class="btn" onclick="saveGoalAndGeneratePlan()">Generate Plan</button>
+                    <button class="btn btn-outline" onclick="loadActiveGoal()">Load Active Plan</button>
+                </div>
+
+                <div id="plansResult" class="dash-layout hidden">
+                    <!-- Workout Plan -->
+                    <div class="dash-card full-width">
+                        <h3 style="color: var(--primary-color); margin-bottom: 1rem;">🗓️ Your Personalized Workout Plan</h3>
+                        <div id="workoutPlanCards" style="display:flex; flex-direction:column; gap:1rem;">
+                            <!-- Injected days -->
+                        </div>
+                    </div>
+
+                    <!-- Nutrition Plan -->
+                    <div class="dash-card full-width">
+                        <h3 style="color: var(--success-color); margin-bottom: 1rem;">🍎 Your Personalized Nutrition Guide</h3>
+                        <div style="display:flex; justify-content:space-between; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+                            <div>
+                                <span style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">Daily Calorie Goal</span>
+                                <h2 id="nutritionCaloriesVal" style="color:var(--text-color); border:none; margin:0; padding:0;">2000 kcal</h2>
+                            </div>
+                            <div style="display:flex; gap:1.5rem;">
+                                <div style="text-align:right;">
+                                    <span style="color: #ffb703; font-size: 0.8rem;">Carbs</span>
+                                    <p id="nutritionCarbs" style="font-weight:700;">220g</p>
+                                </div>
+                                <div style="text-align:right;">
+                                    <span style="color: #e63946; font-size: 0.8rem;">Protein</span>
+                                    <p id="nutritionProtein" style="font-weight:700;">130g</p>
+                                </div>
+                                <div style="text-align:right;">
+                                    <span style="color: #2ec4b6; font-size: 0.8rem;">Fats</span>
+                                    <p id="nutritionFats" style="font-weight:700;">65g</p>
+                                </div>
+                            </div>
+                        </div>
+                        <h4 style="font-size:0.9rem; margin-bottom:0.5rem; text-transform:uppercase; color:var(--text-muted);">Meal Suggestions</h4>
+                        <div id="mealSuggestionsList" style="display:flex; flex-direction:column; gap:0.5rem; font-size:0.9rem;">
+                            <!-- Injected meal suggestions -->
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -1065,6 +1146,120 @@
         } catch (e) {
             log("Error logging workout metrics: " + e.message, "error");
         }
+    }
+
+    async function saveGoalAndGeneratePlan() {
+        if (!authToken) {
+            alert("You must log in to configure goals and plans!");
+            return;
+        }
+        const target_workouts = parseInt(document.getElementById("goalWorkouts").value);
+        const target_reps = parseInt(document.getElementById("goalReps").value);
+        const target_calories = parseInt(document.getElementById("goalCalories").value);
+        const fitness_goal = document.getElementById("fitnessGoal").value;
+        const activity_level = document.getElementById("activityLevel").value;
+
+        log(`Generating personalized fitness plan for ${fitness_goal}...`);
+
+        try {
+            const res = await fetch(`${getBaseUrl()}/auth/goals`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${authToken}`
+                },
+                body: JSON.stringify({
+                    target_workouts,
+                    target_reps,
+                    target_calories,
+                    fitness_goal,
+                    activity_level
+                })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                log("Personalized plans successfully generated and saved!", "success");
+                log(JSON.stringify(data, null, 2), "success");
+                renderGoalPlans(data);
+            } else {
+                log("Failed to generate goal plans: " + data.detail, "error");
+            }
+        } catch (e) {
+            log("Error generating plan: " + e.message, "error");
+        }
+    }
+
+    async function loadActiveGoal() {
+        if (!authToken) {
+            alert("You must log in to load active plans!");
+            return;
+        }
+        log("Fetching active user goal and generated plans...");
+        try {
+            const res = await fetch(`${getBaseUrl()}/auth/goals`, {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${authToken}`
+                }
+            });
+            const data = await res.json();
+            if (res.ok) {
+                log("Active fitness plans successfully loaded.", "success");
+                log(JSON.stringify(data, null, 2), "success");
+                
+                // Pre-fill inputs
+                document.getElementById("goalWorkouts").value = data.target_workouts;
+                document.getElementById("goalReps").value = data.target_reps;
+                document.getElementById("goalCalories").value = data.target_calories;
+                document.getElementById("fitnessGoal").value = data.fitness_goal;
+                document.getElementById("activityLevel").value = data.activity_level;
+                
+                renderGoalPlans(data);
+            } else {
+                log("Failed to load active plan: " + data.detail, "error");
+            }
+        } catch (e) {
+            log("Error loading active plans: " + e.message, "error");
+        }
+    }
+
+    function renderGoalPlans(data) {
+        document.getElementById("plansResult").classList.remove("hidden");
+
+        // Render workout plan
+        const workoutContainer = document.getElementById("workoutPlanCards");
+        workoutContainer.innerHTML = "";
+        data.workout_plan.forEach(item => {
+            const exercisesBadges = item.exercises.map(ex => `<span style="background:rgba(255,255,255,0.05); border:1px solid var(--border-color); padding:0.25rem 0.6rem; border-radius:8px; font-size:0.8rem;">${ex}</span>`).join(" ");
+            workoutContainer.innerHTML += `
+                <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border-color); padding:1rem; border-radius:12px; display:flex; flex-direction:column; gap:0.5rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h4 style="color:var(--primary-color);">${item.day} - ${item.workout_name}</h4>
+                        <span style="font-size:0.8rem; color:var(--text-muted);">${item.duration_minutes} min duration</span>
+                    </div>
+                    <div style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:0.25rem;">
+                        ${exercisesBadges}
+                    </div>
+                </div>
+            `;
+        });
+
+        // Render nutrition plan
+        document.getElementById("nutritionCaloriesVal").innerText = `${data.nutrition_plan.daily_calories} kcal`;
+        document.getElementById("nutritionCarbs").innerText = `${data.nutrition_plan.macronutrients.carbs_g}g`;
+        document.getElementById("nutritionProtein").innerText = `${data.nutrition_plan.macronutrients.protein_g}g`;
+        document.getElementById("nutritionFats").innerText = `${data.nutrition_plan.macronutrients.fats_g}g`;
+
+        const mealContainer = document.getElementById("mealSuggestionsList");
+        mealContainer.innerHTML = "";
+        Object.entries(data.nutrition_plan.meal_suggestions).forEach(([meal, suggestion]) => {
+            mealContainer.innerHTML += `
+                <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.01); border:1px solid var(--border-color); padding:0.6rem 0.8rem; border-radius:8px;">
+                    <strong style="color:var(--success-color); text-transform:uppercase; font-size:0.75rem; width:100px;">${meal}</strong>
+                    <span style="flex:1; text-align:left; color:var(--text-color);">${suggestion}</span>
+                </div>
+            `;
+        });
     }
 </script>
 

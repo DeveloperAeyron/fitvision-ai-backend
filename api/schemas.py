@@ -94,4 +94,54 @@ class DashboardResponse(BaseModel):
     next_workout: NextWorkoutInfo
 
 
+class ExerciseBase(BaseModel):
+    title: str
+    primary_muscle: str
+    exercise_type: str
+    video_url: str | None = None
+    muscles_worked_pct: dict[str, float] | None = None
+    suggested_workouts: list[str] | None = None
+    instructions: list[str] | None = None
+    safety_tips: list[str] | None = None
+
+
+class ExerciseCreate(ExerciseBase):
+    pass
+
+
+class ExerciseUpdate(ExerciseBase):
+    pass
+
+
+class ExerciseResponse(ExerciseBase):
+    id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class GoalCreateRequest(BaseModel):
+    target_workouts: int
+    target_reps: int
+    target_calories: int
+    fitness_goal: str
+    activity_level: str
+
+
+class GoalResponse(BaseModel):
+    id: int
+    target_workouts: int
+    target_reps: int
+    target_calories: int
+    fitness_goal: str
+    activity_level: str
+    workout_plan: list[dict]
+    nutrition_plan: dict
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
 
