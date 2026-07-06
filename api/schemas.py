@@ -50,3 +50,48 @@ class GoogleLoginRequest(BaseModel):
     id_token: str
 
 
+class WorkoutLogCreate(BaseModel):
+    exercise_name: str
+    reps: int
+    calories: int
+    duration_minutes: int
+    created_at: datetime | None = None
+
+
+
+class GoalMetric(BaseModel):
+    current: int
+    target: int
+    unit: str | None = None
+
+
+class DashboardGoals(BaseModel):
+    workouts: GoalMetric
+    reps: GoalMetric
+    calories: GoalMetric
+
+
+class WeeklyProgressDay(BaseModel):
+    day: str
+    percentage: float
+
+
+class NextWorkoutInfo(BaseModel):
+    title: str
+    time: str
+    duration: str
+    location: str
+    type: str
+    difficulty: str
+
+
+class DashboardResponse(BaseModel):
+    username: str
+    email: str
+    completion_percentage: float
+    goals: DashboardGoals
+    weekly_progress: list[WeeklyProgressDay]
+    next_workout: NextWorkoutInfo
+
+
+

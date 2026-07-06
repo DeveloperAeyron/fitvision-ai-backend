@@ -5,6 +5,7 @@ import shutil
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 
 from api.routes import router as count_reps_router
 from api.auth_routes import router as auth_router
@@ -20,7 +21,7 @@ app = FastAPI(title="FitVision Pose & Rep Counting", version="3.0.0")
 @app.on_event("startup")
 async def create_db_tables():
     from api.database import Base, engine
-    from api.models import User, PWDResetOTP
+    from api.models import User, PWDResetOTP, UserGoal, WorkoutLog
     from sqlalchemy import text
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -48,6 +49,12 @@ app.add_middleware(
 
 app.include_router(count_reps_router)
 app.include_router(auth_router)
+
+
+@app.get("/tester", response_class=HTMLResponse)
+async def read_tester():
+    with open("app_test_client.html", "r", encoding="utf-8") as f:
+        return HTMLResponse(content=f.read())
 
 
 if __name__ == "__main__":

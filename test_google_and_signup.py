@@ -42,7 +42,8 @@ def test_google_and_signup_flow():
             "email": google_email,
             "email_verified": "true",
             "name": "Google User",
-            "sub": "google_sub_id_12345"
+            "sub": "google_sub_id_12345",
+            "aud": "272845957801-lel0bj139oa9tic61f419du4fgpspc7c.apps.googleusercontent.com"
         }
 
         # Patch httpx.AsyncClient.get to mock tokeninfo call
