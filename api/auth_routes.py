@@ -729,6 +729,47 @@ async def get_goals_options(
     }
 
 
+@router.get("/goals/activity-levels")
+async def get_activity_levels(
+    current_user: User = Depends(get_current_user)
+):
+    return {
+        "values": [
+            {"id": 1, "name": "Sedentary (desk job, little exercise)"},
+            {"id": 2, "name": "Lightly Active (light exercise 1-3 days/week)"},
+            {"id": 3, "name": "Active (moderate exercise 3-5 days/week)"},
+            {"id": 4, "name": "Very Active (hard exercise 6-7 days/week)"}
+        ]
+    }
+
+
+@router.get("/goals/fitness-goals")
+async def get_fitness_goals(
+    current_user: User = Depends(get_current_user)
+):
+    return {
+        "values": [
+            {"id": 1, "name": "Weight Loss"},
+            {"id": 2, "name": "Muscle Gain"},
+            {"id": 3, "name": "Endurance & Stamina"},
+            {"id": 4, "name": "General Health"}
+        ]
+    }
+
+
+@router.get("/goals/timelines")
+async def get_timelines(
+    current_user: User = Depends(get_current_user)
+):
+    return {
+        "values": [
+            {"id": 1, "name": "8 Weeks"},
+            {"id": 2, "name": "12 Weeks"},
+            {"id": 3, "name": "16 Weeks"}
+        ]
+    }
+
+
 @router.get("/goals", response_model=list[GoalResponse])
 async def get_user_goals(
     current_user: User = Depends(get_current_user),

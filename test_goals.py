@@ -33,6 +33,19 @@ def test_goals_and_plans_flow():
         assert "fitness_goals" in options
         assert "activity_levels" in options
 
+        # Test new specific list endpoints
+        act_res = client.get("/auth/goals/activity-levels", headers=headers)
+        assert act_res.status_code == 200
+        assert "values" in act_res.json()
+
+        fit_res = client.get("/auth/goals/fitness-goals", headers=headers)
+        assert fit_res.status_code == 200
+        assert "values" in fit_res.json()
+
+        time_res = client.get("/auth/goals/timelines", headers=headers)
+        assert time_res.status_code == 200
+        assert "values" in time_res.json()
+
         # 2. Test create goal: Unauthenticated (should fail)
         goal_payload = {
             "target_workouts": 4,
