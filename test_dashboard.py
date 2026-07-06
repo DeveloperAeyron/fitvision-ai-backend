@@ -8,21 +8,19 @@ from main import app
 
 def test_dashboard_calculations():
     uid = uuid.uuid4().hex[:8]
-    username = f"user_{uid}"
     email = f"user_{uid}@example.com"
     password = "SecurePassword123!"
 
     with TestClient(app) as client:
         # 1. Signup and login to get auth token
         signup_res = client.post("/auth/signup", json={
-            "username": username,
             "email": email,
             "password": password
         })
         assert signup_res.status_code == 201
 
         login_res = client.post("/auth/login", data={
-            "username": username,
+            "email": email,
             "password": password
         })
         assert login_res.status_code == 200
@@ -33,7 +31,7 @@ def test_dashboard_calculations():
         dash_res = client.get("/auth/dashboard", headers=headers)
         assert dash_res.status_code == 200
         data = dash_res.json()
-        assert data["username"] == username
+        assert data["username"] == email
         assert data["email"] == email
         assert data["completion_percentage"] == 72.0  # fallback today completion
         assert data["goals"]["workouts"]["current"] == 11

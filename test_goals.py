@@ -7,7 +7,6 @@ from main import app
 
 def test_goals_and_plans_flow():
     uid = uuid.uuid4().hex[:8]
-    username = f"user_{uid}"
     email = f"user_{uid}@example.com"
     password = "SecurePassword123!"
 
@@ -15,13 +14,13 @@ def test_goals_and_plans_flow():
         # 1. Sign up and login to obtain a bearer token
         signup_res = client.post(
             "/auth/signup",
-            json={"username": username, "email": email, "password": password}
+            json={"email": email, "password": password}
         )
         assert signup_res.status_code == 201
 
         login_res = client.post(
             "/auth/login",
-            data={"username": username, "password": password}
+            data={"email": email, "password": password}
         )
         assert login_res.status_code == 200
         token = login_res.json()["access_token"]
@@ -55,9 +54,13 @@ def test_goals_and_plans_flow():
         # 4. Test fetch active goal (GET /auth/goals)
         get_res = client.get("/auth/goals", headers=headers)
         assert get_res.status_code == 200
-        active_data = get_res.json()
+        active_list = get_res.json()
+        assert isinstance(active_list, list)
+        assert len(active_list) == 1
+        active_data = active_list[0]
         assert active_data["fitness_goal"] == "Weight Loss"
         assert len(active_data["workout_plan"]) > 0
+        assert "progress" in active_data
 
         # 5. Test updating goal with different metrics (Muscle Gain)
         muscle_payload = {
@@ -73,6 +76,25 @@ def test_goals_and_plans_flow():
         assert updated_data["target_workouts"] == 5
         assert updated_data["fitness_goal"] == "Muscle Gain"
         assert updated_data["nutrition_plan"]["daily_calories"] == 3000  # Gain + Active
+
+        # Now verify list has 2 goals (history) ordered newest first
+        list_res = client.get("/auth/goals", headers=headers)
+        assert list_res.status_code == 200
+        all_goals = list_res.json()
+        assert len(all_goals) == 2
+        assert all_goals[0]["fitness_goal"] == "Muscle Gain"
+        assert all_goals[1]["fitness_goal"] == "Weight Loss"
+
+        # 6. Test goal activation
+        active_goal_id = all_goals[0]["id"]
+        act_res = client.post(f"/auth/goals/{active_goal_id}/activate", headers=headers)
+        assert act_res.status_code == 200
+        assert act_res.json()["is_active"] is True
+
+        # 7. Test meal plan generation activation
+        meal_res = client.post(f"/auth/goals/{active_goal_id}/meal-plan", headers=headers)
+        assert meal_res.status_code == 200
+        assert meal_res.json()["has_meal_plan"] is True
 
         print("--- ALL USER GOALS & PLANNER INTEGRATION TESTS PASSED ---")
 

@@ -12,7 +12,6 @@ from api.models import User, PWDResetOTP
 def test_forgot_password_flow():
     # Use a unique username and email for this run
     uid = uuid.uuid4().hex[:8]
-    username = f"user_{uid}"
     email = f"user_{uid}@example.com"
     old_password = "OldPassword123!"
     new_password = "NewPassword123!"
@@ -20,7 +19,6 @@ def test_forgot_password_flow():
     with TestClient(app) as client:
         # 1. Sign up the user
         signup_data = {
-            "username": username,
             "email": email,
             "password": old_password
         }
@@ -105,11 +103,11 @@ def test_forgot_password_flow():
         assert res.status_code == 200, f"Reset password failed: {res.text}"
 
         # 8. Try logging in with the old password (should fail)
-        res = client.post("/auth/login", data={"username": username, "password": old_password})
+        res = client.post("/auth/login", data={"email": email, "password": old_password})
         assert res.status_code == 401, "Should fail login with old password"
 
         # 9. Try logging in with the new password (should succeed)
-        res = client.post("/auth/login", data={"username": username, "password": new_password})
+        res = client.post("/auth/login", data={"email": email, "password": new_password})
         assert res.status_code == 200, f"Login with new password failed: {res.text}"
         assert "access_token" in res.json()
 

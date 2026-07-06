@@ -1,5 +1,5 @@
 from datetime import datetime, date
-from sqlalchemy import String, DateTime, Date, ForeignKey
+from sqlalchemy import String, DateTime, Date, ForeignKey, Integer, Float, Boolean
 from sqlalchemy.orm import Mapped, mapped_column
 from api.database import Base
 
@@ -29,14 +29,26 @@ class UserGoal(Base):
     __tablename__ = "user_goals"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), unique=True, index=True, nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
     target_workouts: Mapped[int] = mapped_column(default=15, nullable=False)
     target_reps: Mapped[int] = mapped_column(default=1800, nullable=False)
     target_calories: Mapped[int] = mapped_column(default=8000, nullable=False)
     fitness_goal: Mapped[str | None] = mapped_column(String(100), nullable=True)
     activity_level: Mapped[str | None] = mapped_column(String(50), nullable=True)
-    workout_plan: Mapped[str | None] = mapped_column(String(2000), nullable=True)
-    nutrition_plan: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    workout_plan: Mapped[str | None] = mapped_column(String(4000), nullable=True)
+    nutrition_plan: Mapped[str | None] = mapped_column(String(4000), nullable=True)
+    
+    age: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    gender: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    weight: Mapped[float | None] = mapped_column(Float, nullable=True)
+    weight_unit: Mapped[str | None] = mapped_column(String(10), default="kg", nullable=True)
+    timeline: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    available_days: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    alarm_sound: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    available_time: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    has_meal_plan: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
 
 

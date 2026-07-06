@@ -6,7 +6,7 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Form
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy import delete
@@ -95,14 +95,6 @@ async def send_otp_email(email: str, otp: str):
 
 @router.post("/signup", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def signup(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
-    # Check if username exists
-    username_result = await db.execute(select(User).where(User.username == user_data.username))
-    if username_result.scalars().first():
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username already registered"
-        )
-
     # Check if email exists
     email_result = await db.execute(select(User).where(User.email == user_data.email))
     if email_result.scalars().first():
@@ -112,7 +104,7 @@ async def signup(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
         )
 
     new_user = User(
-        username=user_data.username,
+        username=user_data.email,
         email=user_data.email,
         hashed_password=hash_password(user_data.password),
         gender=user_data.gender,
@@ -124,9 +116,26 @@ async def signup(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
     return new_user
 
 
+class OAuth2PasswordRequestFormEmail:
+    def __init__(
+        self,
+        grant_type: str | None = Form(default=None, pattern="password"),
+        email: str = Form(..., description="Email address used for login"),
+        password: str = Form(...),
+        scope: str = Form(default=""),
+        client_id: str | None = Form(default=None),
+        client_secret: str | None = Form(default=None),
+    ):
+        self.grant_type = grant_type
+        self.username = email
+        self.password = password
+        self.scopes = [s.strip() for s in scope.split()]
+        self.client_id = client_id
+        self.client_secret = client_secret
+
+
 @router.post("/login", response_model=Token)
-async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
-    # Support checking either username or email in the 'username' field
+async def login(form_data: OAuth2PasswordRequestFormEmail = Depends(), db: AsyncSession = Depends(get_db)):
     result = await db.execute(
         select(User).where(
             (User.username == form_data.username) | (User.email == form_data.username)
@@ -137,7 +146,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSessi
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username/email or password",
+            detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -312,19 +321,11 @@ async def google_login(request: GoogleLoginRequest, db: AsyncSession = Depends(g
 
     if not user:
         # User does not exist, automatically register them
-        email_prefix = email.split("@")[0]
-        username = email_prefix[:40]
-        
-        # Ensure unique username
-        user_check = await db.execute(select(User).where(User.username == username))
-        if user_check.scalars().first():
-            username = f"{username}_{secrets.token_hex(3)}"
-
         # Generate a random password for Google-authenticated user
         random_password = secrets.token_urlsafe(16)
 
         user = User(
-            username=username,
+            username=email,
             email=email,
             hashed_password=hash_password(random_password),
             gender=None,
@@ -345,7 +346,9 @@ async def get_dashboard(
     db: AsyncSession = Depends(get_db)
 ):
     # 1. Fetch or create UserGoal
-    goal_result = await db.execute(select(UserGoal).where(UserGoal.user_id == current_user.id))
+    goal_result = await db.execute(
+        select(UserGoal).where(UserGoal.user_id == current_user.id).order_by(UserGoal.id.desc())
+    )
     user_goal = goal_result.scalars().first()
     if not user_goal:
         user_goal = UserGoal(user_id=current_user.id)
@@ -482,19 +485,67 @@ async def log_workout(
 
 import json
 
-def generate_workout_and_nutrition_plans(fitness_goal: str, activity_level: str):
+def generate_workout_and_nutrition_plans(fitness_goal: str, activity_level: str, available_days: list[str] = None):
     goal = fitness_goal.lower().strip()
     level = activity_level.lower().strip()
     
+    day_map = {
+        "Mon": "Monday", "Tue": "Tuesday", "Wed": "Wednesday",
+        "Thu": "Thursday", "Fri": "Friday", "Sat": "Saturday", "Sun": "Sunday",
+        "Monday": "Monday", "Tuesday": "Tuesday", "Wednesday": "Wednesday",
+        "Thursday": "Thursday", "Friday": "Friday", "Saturday": "Saturday", "Sunday": "Sunday"
+    }
+    
+    days = []
+    if available_days:
+        for d in available_days:
+            if d in day_map:
+                days.append(day_map[d])
+    
+    if not days:
+        if "loss" in goal or "weight" in goal:
+            days = ["Monday", "Wednesday", "Friday"]
+        elif "gain" in goal or "muscle" in goal:
+            days = ["Monday", "Wednesday", "Friday"]
+        else:
+            days = ["Tuesday", "Thursday", "Saturday"]
+            
     workout_plan = []
-    nutrition_plan = {}
+    for day in days:
+        if "loss" in goal or "weight" in goal:
+            exercises = [
+                {"name": "Push-Ups", "sets": 4, "reps_or_duration": "20 reps", "type": "Bodyweight"},
+                {"name": "Bodyweight Squats", "sets": 4, "reps_or_duration": "15 reps", "type": "Bodyweight"},
+                {"name": "Plank Hold", "sets": 3, "reps_or_duration": "45 sec", "type": "Bodyweight"}
+            ]
+            workout_name = "HIIT Fat Burner"
+            duration = 30
+        elif "gain" in goal or "muscle" in goal or "hypertrophy" in goal:
+            exercises = [
+                {"name": "Push-Ups", "sets": 4, "reps_or_duration": "20 reps", "type": "Bodyweight"},
+                {"name": "Bodyweight Squats", "sets": 4, "reps_or_duration": "15 reps", "type": "Bodyweight"},
+                {"name": "Plank Hold", "sets": 3, "reps_or_duration": "45 sec", "type": "Bodyweight"}
+            ]
+            workout_name = "Hypertrophy Power"
+            duration = 50
+        else:
+            exercises = [
+                {"name": "Jumping Jacks", "sets": 3, "reps_or_duration": "30 sec", "type": "Cardio"},
+                {"name": "Glute Bridges", "sets": 3, "reps_or_duration": "15 reps", "type": "Bodyweight"},
+                {"name": "Bird Dog", "sets": 3, "reps_or_duration": "12 reps", "type": "Mobility"}
+            ]
+            workout_name = "General Health & Tone"
+            duration = 40
 
+        workout_plan.append({
+            "day": day,
+            "workout_name": workout_name,
+            "duration_minutes": duration,
+            "exercises": exercises
+        })
+
+    # Nutrition Plan
     if "loss" in goal or "weight" in goal:
-        workout_plan = [
-            {"day": "Monday", "workout_name": "HIIT Fat Burner", "duration_minutes": 30, "exercises": ["jumping jacks", "mountain climbers", "burpees"]},
-            {"day": "Wednesday", "workout_name": "Full Body Resistance", "duration_minutes": 40, "exercises": ["pushups", "bodyweight squats", "lunges"]},
-            {"day": "Friday", "workout_name": "Steady State Cardio", "duration_minutes": 45, "exercises": ["running/brisk walk", "cycling"]}
-        ]
         cal = 1600 if "sedentary" in level else (1800 if "light" in level else 2000)
         nutrition_plan = {
             "daily_calories": cal,
@@ -506,11 +557,6 @@ def generate_workout_and_nutrition_plans(fitness_goal: str, activity_level: str)
             }
         }
     elif "gain" in goal or "muscle" in goal or "hypertrophy" in goal:
-        workout_plan = [
-            {"day": "Monday", "workout_name": "Push Day (Chest/Triceps)", "duration_minutes": 50, "exercises": ["bench press/pushups", "overhead press", "tricep extensions"]},
-            {"day": "Wednesday", "workout_name": "Pull Day (Back/Biceps)", "duration_minutes": 50, "exercises": ["pullups/rows", "lat pulldowns", "bicep curls"]},
-            {"day": "Friday", "workout_name": "Leg Day (Quads/Hamstrings)", "duration_minutes": 60, "exercises": ["barbell squats", "romanian deadlifts", "calf raises"]}
-        ]
         cal = 2400 if "sedentary" in level else (2700 if "light" in level else 3000)
         nutrition_plan = {
             "daily_calories": cal,
@@ -522,11 +568,6 @@ def generate_workout_and_nutrition_plans(fitness_goal: str, activity_level: str)
             }
         }
     else:
-        workout_plan = [
-            {"day": "Tuesday", "workout_name": "Aerobic Capacity", "duration_minutes": 45, "exercises": ["jogging", "cycling", "stretching"]},
-            {"day": "Thursday", "workout_name": "Muscular Endurance Circuit", "duration_minutes": 35, "exercises": ["high-rep pushups", "high-rep bodyweight squats", "plank hold"]},
-            {"day": "Saturday", "workout_name": "Active Recovery / Mobility", "duration_minutes": 30, "exercises": ["yoga", "foam rolling"]}
-        ]
         cal = 1800 if "sedentary" in level else (2100 if "light" in level else 2400)
         nutrition_plan = {
             "daily_calories": cal,
@@ -537,11 +578,31 @@ def generate_workout_and_nutrition_plans(fitness_goal: str, activity_level: str)
                 "dinner": "Grilled chicken breast with large portion of roasted Mediterranean vegetables"
             }
         }
-
+        
     return workout_plan, nutrition_plan
 
 
-def to_goal_response(model: UserGoal) -> dict:
+async def calculate_weekly_progress(user_id: int, db: AsyncSession) -> tuple[int, int, int]:
+    today = datetime.utcnow().date()
+    start_of_week = datetime.combine(today - timedelta(days=today.weekday()), datetime.min.time())
+    end_of_week = start_of_week + timedelta(days=7)
+
+    logs_result = await db.execute(
+        select(WorkoutLog).where(
+            WorkoutLog.user_id == user_id,
+            WorkoutLog.created_at >= start_of_week,
+            WorkoutLog.created_at < end_of_week
+        )
+    )
+    logs = logs_result.scalars().all()
+
+    actual_workouts = len(logs)
+    actual_reps = sum(log.reps for log in logs)
+    actual_calories = sum(log.calories for log in logs)
+    return actual_workouts, actual_reps, actual_calories
+
+
+def to_goal_response(model: UserGoal, workouts_current: int, reps_current: int, calories_current: int) -> dict:
     w_plan = []
     n_plan = {}
     if model.workout_plan:
@@ -561,6 +622,30 @@ def to_goal_response(model: UserGoal) -> dict:
             model.activity_level or "Active"
         )
 
+    w_pct = (workouts_current / model.target_workouts) if model.target_workouts > 0 else 0
+    r_pct = (reps_current / model.target_reps) if model.target_reps > 0 else 0
+    c_pct = (calories_current / model.target_calories) if model.target_calories > 0 else 0
+    
+    w_pct = min(w_pct, 1.0)
+    r_pct = min(r_pct, 1.0)
+    c_pct = min(c_pct, 1.0)
+    
+    completion_percentage = round(((w_pct + r_pct + c_pct) / 3.0) * 100.0, 1)
+
+    progress = {
+        "workouts": {"current": workouts_current, "target": model.target_workouts, "unit": "workouts"},
+        "reps": {"current": reps_current, "target": model.target_reps, "unit": "reps"},
+        "calories": {"current": calories_current, "target": model.target_calories, "unit": "kcal"},
+        "completion_percentage": completion_percentage
+    }
+
+    days_list = []
+    if model.available_days:
+        try:
+            days_list = json.loads(model.available_days)
+        except Exception:
+            days_list = [d.strip() for d in model.available_days.split(",") if d.strip()]
+
     return {
         "id": model.id,
         "target_workouts": model.target_workouts,
@@ -570,7 +655,18 @@ def to_goal_response(model: UserGoal) -> dict:
         "activity_level": model.activity_level or "Active",
         "workout_plan": w_plan,
         "nutrition_plan": n_plan,
-        "created_at": datetime.utcnow()
+        "progress": progress,
+        "age": model.age,
+        "gender": model.gender,
+        "weight": model.weight,
+        "weight_unit": model.weight_unit,
+        "timeline": model.timeline,
+        "available_days": days_list,
+        "alarm_sound": model.alarm_sound,
+        "available_time": model.available_time,
+        "is_active": model.is_active,
+        "has_meal_plan": model.has_meal_plan,
+        "created_at": model.created_at
     }
 
 
@@ -580,52 +676,55 @@ async def create_user_goal(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    goal_res = await db.execute(select(UserGoal).where(UserGoal.user_id == current_user.id))
-    user_goal = goal_res.scalars().first()
-
     workout_plan, nutrition_plan = generate_workout_and_nutrition_plans(
-        request.fitness_goal, request.activity_level
+        request.fitness_goal, request.activity_level, request.available_days
     )
 
     w_str = json.dumps(workout_plan)
     n_str = json.dumps(nutrition_plan)
+    days_str = json.dumps(request.available_days) if request.available_days else None
 
-    if not user_goal:
-        user_goal = UserGoal(
-            user_id=current_user.id,
-            target_workouts=request.target_workouts,
-            target_reps=request.target_reps,
-            target_calories=request.target_calories,
-            fitness_goal=request.fitness_goal,
-            activity_level=request.activity_level,
-            workout_plan=w_str,
-            nutrition_plan=n_str
-        )
-        db.add(user_goal)
-    else:
-        user_goal.target_workouts = request.target_workouts
-        user_goal.target_reps = request.target_reps
-        user_goal.target_calories = request.target_calories
-        user_goal.fitness_goal = request.fitness_goal
-        user_goal.activity_level = request.activity_level
-        user_goal.workout_plan = w_str
-        user_goal.nutrition_plan = n_str
-
+    user_goal = UserGoal(
+        user_id=current_user.id,
+        target_workouts=request.target_workouts,
+        target_reps=request.target_reps,
+        target_calories=request.target_calories,
+        fitness_goal=request.fitness_goal,
+        activity_level=request.activity_level,
+        workout_plan=w_str,
+        nutrition_plan=n_str,
+        age=request.age,
+        gender=request.gender,
+        weight=request.weight,
+        weight_unit=request.weight_unit,
+        timeline=request.timeline,
+        available_days=days_str,
+        alarm_sound=request.alarm_sound,
+        available_time=request.available_time,
+        is_active=False,
+        has_meal_plan=False
+    )
+    db.add(user_goal)
     await db.commit()
     await db.refresh(user_goal)
-    return to_goal_response(user_goal)
+    
+    workouts_current, reps_current, calories_current = await calculate_weekly_progress(current_user.id, db)
+    return to_goal_response(user_goal, workouts_current, reps_current, calories_current)
 
 
-@router.get("/goals", response_model=GoalResponse)
-async def get_user_goal(
+@router.get("/goals", response_model=list[GoalResponse])
+async def get_user_goals(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    goal_res = await db.execute(select(UserGoal).where(UserGoal.user_id == current_user.id))
-    user_goal = goal_res.scalars().first()
-    if not user_goal:
+    goal_res = await db.execute(
+        select(UserGoal).where(UserGoal.user_id == current_user.id).order_by(UserGoal.id.desc())
+    )
+    user_goals = goal_res.scalars().all()
+    
+    if not user_goals:
         workout_plan, nutrition_plan = generate_workout_and_nutrition_plans("General Health", "Active")
-        user_goal = UserGoal(
+        default_goal = UserGoal(
             user_id=current_user.id,
             target_workouts=15,
             target_reps=1800,
@@ -635,11 +734,51 @@ async def get_user_goal(
             workout_plan=json.dumps(workout_plan),
             nutrition_plan=json.dumps(nutrition_plan)
         )
-        db.add(user_goal)
+        db.add(default_goal)
         await db.commit()
-        await db.refresh(user_goal)
+        await db.refresh(default_goal)
+        user_goals = [default_goal]
 
-    return to_goal_response(user_goal)
+    workouts_current, reps_current, calories_current = await calculate_weekly_progress(current_user.id, db)
+    return [to_goal_response(g, workouts_current, reps_current, calories_current) for g in user_goals]
+
+
+@router.post("/goals/{goal_id}/activate", response_model=GoalResponse)
+async def activate_user_goal(
+    goal_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(select(UserGoal).where(UserGoal.id == goal_id, UserGoal.user_id == current_user.id))
+    user_goal = result.scalars().first()
+    if not user_goal:
+        raise HTTPException(status_code=404, detail="Goal not found")
+        
+    user_goal.is_active = True
+    await db.commit()
+    await db.refresh(user_goal)
+    
+    workouts_current, reps_current, calories_current = await calculate_weekly_progress(current_user.id, db)
+    return to_goal_response(user_goal, workouts_current, reps_current, calories_current)
+
+
+@router.post("/goals/{goal_id}/meal-plan", response_model=GoalResponse)
+async def generate_meal_plan_for_goal(
+    goal_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(select(UserGoal).where(UserGoal.id == goal_id, UserGoal.user_id == current_user.id))
+    user_goal = result.scalars().first()
+    if not user_goal:
+        raise HTTPException(status_code=404, detail="Goal not found")
+        
+    user_goal.has_meal_plan = True
+    await db.commit()
+    await db.refresh(user_goal)
+    
+    workouts_current, reps_current, calories_current = await calculate_weekly_progress(current_user.id, db)
+    return to_goal_response(user_goal, workouts_current, reps_current, calories_current)
 
 
 

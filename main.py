@@ -28,16 +28,49 @@ async def create_db_tables():
         await conn.run_sync(Base.metadata.create_all)
         await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(50)"))
         await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS date_of_birth DATE"))
+        try:
+            await conn.execute(text("ALTER TABLE user_goals ALTER COLUMN workout_plan TYPE VARCHAR(4000)"))
+        except Exception:
+            pass
+        try:
+            await conn.execute(text("ALTER TABLE user_goals ALTER COLUMN nutrition_plan TYPE VARCHAR(4000)"))
+        except Exception:
+            pass
+
         for col_name, col_type in [
             ("fitness_goal", "VARCHAR(100)"),
             ("activity_level", "VARCHAR(50)"),
-            ("workout_plan", "VARCHAR(2000)"),
-            ("nutrition_plan", "VARCHAR(2000)")
+            ("workout_plan", "VARCHAR(4000)"),
+            ("nutrition_plan", "VARCHAR(4000)"),
+            ("age", "INTEGER"),
+            ("gender", "VARCHAR(50)"),
+            ("weight", "DOUBLE PRECISION"),
+            ("weight_unit", "VARCHAR(10)"),
+            ("timeline", "VARCHAR(50)"),
+            ("available_days", "VARCHAR(200)"),
+            ("alarm_sound", "VARCHAR(100)"),
+            ("available_time", "VARCHAR(20)"),
+            ("is_active", "BOOLEAN DEFAULT FALSE"),
+            ("has_meal_plan", "BOOLEAN DEFAULT FALSE"),
+            ("created_at", "TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP")
         ]:
             try:
                 await conn.execute(text(f"ALTER TABLE user_goals ADD COLUMN {col_name} {col_type}"))
             except Exception:
                 pass
+        
+        try:
+            await conn.execute(text("DROP INDEX IF EXISTS ix_user_goals_user_id CASCADE"))
+        except Exception:
+            pass
+        try:
+            await conn.execute(text("ALTER TABLE user_goals DROP CONSTRAINT IF EXISTS ix_user_goals_user_id"))
+        except Exception:
+            pass
+        try:
+            await conn.execute(text("CREATE INDEX IF NOT EXISTS ix_user_goals_user_id ON user_goals (user_id)"))
+        except Exception:
+            pass
 
 
 @app.on_event("startup")

@@ -7,7 +7,6 @@ from main import app
 
 def test_exercise_crud_flow():
     uid = uuid.uuid4().hex[:8]
-    username = f"user_{uid}"
     email = f"user_{uid}@example.com"
     password = "SecurePassword123!"
 
@@ -15,13 +14,13 @@ def test_exercise_crud_flow():
         # 1. Sign up and login to obtain a bearer token
         signup_res = client.post(
             "/auth/signup",
-            json={"username": username, "email": email, "password": password}
+            json={"email": email, "password": password}
         )
         assert signup_res.status_code == 201
 
         login_res = client.post(
             "/auth/login",
-            data={"username": username, "password": password}
+            data={"email": email, "password": password}
         )
         assert login_res.status_code == 200
         token = login_res.json()["access_token"]

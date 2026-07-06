@@ -2,19 +2,17 @@ from datetime import datetime, date
 from pydantic import BaseModel, EmailStr, Field
 
 class UserCreate(BaseModel):
-    username: str = Field(..., min_length=3, max_length=50)
     email: EmailStr
     password: str = Field(..., min_length=6, max_length=100)
     gender: str | None = None
     date_of_birth: date | None = None
 
 class UserLogin(BaseModel):
-    username_or_email: str
+    email: EmailStr
     password: str
 
 class UserResponse(BaseModel):
     id: int
-    username: str
     email: EmailStr
     gender: str | None = None
     date_of_birth: date | None = None
@@ -127,6 +125,27 @@ class GoalCreateRequest(BaseModel):
     target_calories: int
     fitness_goal: str
     activity_level: str
+    age: int | None = None
+    gender: str | None = None
+    weight: float | None = None
+    weight_unit: str | None = "kg"
+    timeline: str | None = None
+    available_days: list[str] | None = None
+    alarm_sound: str | None = None
+    available_time: str | None = None
+
+
+class GoalMetricProgress(BaseModel):
+    current: int
+    target: int
+    unit: str
+
+
+class GoalProgress(BaseModel):
+    workouts: GoalMetricProgress
+    reps: GoalMetricProgress
+    calories: GoalMetricProgress
+    completion_percentage: float
 
 
 class GoalResponse(BaseModel):
@@ -138,6 +157,17 @@ class GoalResponse(BaseModel):
     activity_level: str
     workout_plan: list[dict]
     nutrition_plan: dict
+    progress: GoalProgress
+    age: int | None = None
+    gender: str | None = None
+    weight: float | None = None
+    weight_unit: str | None = None
+    timeline: str | None = None
+    available_days: list[str] | None = None
+    alarm_sound: str | None = None
+    available_time: str | None = None
+    is_active: bool
+    has_meal_plan: bool
     created_at: datetime
 
     class Config:

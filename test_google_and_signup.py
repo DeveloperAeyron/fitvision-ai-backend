@@ -7,7 +7,6 @@ from main import app
 
 def test_google_and_signup_flow():
     uid = uuid.uuid4().hex[:8]
-    username = f"user_{uid}"
     email = f"user_{uid}@example.com"
     password = "SecurePassword123!"
     gender = "Male"
@@ -16,7 +15,6 @@ def test_google_and_signup_flow():
     with TestClient(app) as client:
         # 1. Test signup with new fields (gender and date_of_birth)
         signup_data = {
-            "username": username,
             "email": email,
             "password": password,
             "gender": gender,
@@ -26,7 +24,6 @@ def test_google_and_signup_flow():
         assert res.status_code == 201, f"Signup failed: {res.text}"
         
         user_data = res.json()
-        assert user_data["username"] == username
         assert user_data["email"] == email
         assert user_data["gender"] == gender
         assert user_data["date_of_birth"] == dob

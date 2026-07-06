@@ -8,7 +8,6 @@ def test_auth_flow():
     with TestClient(app) as client:
         # 1. Signup
         test_user = {
-            "username": "testuser_unique_123",
             "email": "testuser_unique_123@example.com",
             "password": "testpassword123"
         }
@@ -23,7 +22,7 @@ def test_auth_flow():
 
         # 2. Login
         login_data = {
-            "username": test_user["username"],
+            "email": test_user["email"],
             "password": test_user["password"]
         }
         # OAuth2Form login uses x-www-form-urlencoded data

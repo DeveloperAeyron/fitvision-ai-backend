@@ -43,20 +43,20 @@ def calculate_angle(a, b, c):
 
 
 @router.post("/signup")
-async def signup(username: str = Form(...), password: str = Form(...)):
+async def signup(email: str = Form(...), password: str = Form(...)):
     users = load_users()
-    if username in users:
-        raise HTTPException(status_code=400, detail="Username already exists.")
-    users[username] = {"password": password}
+    if email in users:
+        raise HTTPException(status_code=400, detail="Email already exists.")
+    users[email] = {"password": password}
     save_users(users)
     return {"status": "success", "message": "User registered successfully!"}
 
 
 @router.post("/login")
-async def login(username: str = Form(...), password: str = Form(...)):
+async def login(email: str = Form(...), password: str = Form(...)):
     users = load_users()
-    if username not in users or users[username]["password"] != password:
-        raise HTTPException(status_code=401, detail="Invalid username or password.")
+    if email not in users or users[email]["password"] != password:
+        raise HTTPException(status_code=401, detail="Invalid email or password.")
     return {"status": "success", "message": "Login successful!"}
 
 
