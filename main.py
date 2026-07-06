@@ -20,9 +20,12 @@ app = FastAPI(title="FitVision Pose & Rep Counting", version="3.0.0")
 @app.on_event("startup")
 async def create_db_tables():
     from api.database import Base, engine
-    from api.models import User
+    from api.models import User, PWDResetOTP
+    from sqlalchemy import text
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(50)"))
+        await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS date_of_birth DATE"))
 
 
 @app.on_event("startup")
