@@ -130,9 +130,9 @@ class GoalCreateRequest(BaseModel):
     weight: float | None = None
     weight_unit: str | None = "kg"
     timeline: str | None = None
-    available_days: list[str] | None = None
+    days: list[str] | None = None
     alarm_sound: str | None = None
-    available_time: str | None = None
+    time_of_day: str | None = None
 
 
 class GoalMetricProgress(BaseModel):
@@ -163,9 +163,9 @@ class GoalResponse(BaseModel):
     weight: float | None = None
     weight_unit: str | None = None
     timeline: str | None = None
-    available_days: list[str] | None = None
+    days: list[str] | None = None
     alarm_sound: str | None = None
-    available_time: str | None = None
+    time_of_day: str | None = None
     is_active: bool
     has_meal_plan: bool
     created_at: datetime

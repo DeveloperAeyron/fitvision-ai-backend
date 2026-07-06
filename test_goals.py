@@ -26,6 +26,13 @@ def test_goals_and_plans_flow():
         token = login_res.json()["access_token"]
         headers = {"Authorization": f"Bearer {token}"}
 
+        # 1b. Test options endpoint
+        opt_res = client.get("/auth/goals/options", headers=headers)
+        assert opt_res.status_code == 200
+        options = opt_res.json()
+        assert "fitness_goals" in options
+        assert "activity_levels" in options
+
         # 2. Test create goal: Unauthenticated (should fail)
         goal_payload = {
             "target_workouts": 4,

@@ -661,9 +661,9 @@ def to_goal_response(model: UserGoal, workouts_current: int, reps_current: int, 
         "weight": model.weight,
         "weight_unit": model.weight_unit,
         "timeline": model.timeline,
-        "available_days": days_list,
+        "days": days_list,
         "alarm_sound": model.alarm_sound,
-        "available_time": model.available_time,
+        "time_of_day": model.available_time,
         "is_active": model.is_active,
         "has_meal_plan": model.has_meal_plan,
         "created_at": model.created_at
@@ -677,12 +677,12 @@ async def create_user_goal(
     db: AsyncSession = Depends(get_db)
 ):
     workout_plan, nutrition_plan = generate_workout_and_nutrition_plans(
-        request.fitness_goal, request.activity_level, request.available_days
+        request.fitness_goal, request.activity_level, request.days
     )
 
     w_str = json.dumps(workout_plan)
     n_str = json.dumps(nutrition_plan)
-    days_str = json.dumps(request.available_days) if request.available_days else None
+    days_str = json.dumps(request.days) if request.days else None
 
     user_goal = UserGoal(
         user_id=current_user.id,
@@ -700,7 +700,7 @@ async def create_user_goal(
         timeline=request.timeline,
         available_days=days_str,
         alarm_sound=request.alarm_sound,
-        available_time=request.available_time,
+        available_time=request.time_of_day,
         is_active=False,
         has_meal_plan=False
     )
@@ -710,6 +710,23 @@ async def create_user_goal(
     
     workouts_current, reps_current, calories_current = await calculate_weekly_progress(current_user.id, db)
     return to_goal_response(user_goal, workouts_current, reps_current, calories_current)
+
+
+@router.get("/goals/options")
+async def get_goals_options(
+    current_user: User = Depends(get_current_user)
+):
+    return {
+        "fitness_goals": ["Weight Loss", "Muscle Gain", "Endurance", "General Health"],
+        "activity_levels": [
+            {"value": "Sedentary", "label": "Sedentary (desk job, little exercise)"},
+            {"value": "Lightly Active", "label": "Lightly Active (light exercise 1-3 days/week)"},
+            {"value": "Active", "label": "Active (moderate exercise 3-5 days/week)"},
+            {"value": "Very Active", "label": "Very Active (hard exercise 6-7 days/week)"}
+        ],
+        "timelines": ["8 Weeks", "12 Weeks", "16 Weeks"],
+        "alarm_sounds": ["Mission Alarm", "Energetic Wake", "Gentle Bells"]
+    }
 
 
 @router.get("/goals", response_model=list[GoalResponse])
