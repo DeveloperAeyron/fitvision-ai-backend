@@ -145,6 +145,18 @@ class GoalCreateRequest(BaseModel):
     time_of_day: str | None = None
 
 
+class MealCreateRequest(BaseModel):
+    fitness_goal: str
+    activity_level: str
+    age: int | None = None
+    gender: str | None = None
+    weight: float | None = None
+    weight_unit: str | None = "kg"
+    food_allergies: str | None = None
+    health_conditions: str | None = None
+    notes: str | None = None
+
+
 class GoalMetricProgress(BaseModel):
     current: int
     target: int

@@ -30,6 +30,8 @@ from api.schemas import (
     WorkoutLogCreate,
     GoalCreateRequest,
     GoalResponse,
+    MealCreateRequest,
+    MealPlanResponse,
 )
 from api.auth import (
     hash_password,
@@ -623,6 +625,54 @@ async def create_user_goal(
     
     workouts_current, reps_current, calories_current = await calculate_weekly_progress(current_user.id, db)
     return to_goal_response(user_goal, workouts_current, reps_current, calories_current)
+
+
+@router.post("/meals", response_model=MealPlanResponse)
+async def create_user_meal(
+    request: MealCreateRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    _, nutrition_plan = generate_workout_and_nutrition_plans(
+        request.fitness_goal, request.activity_level
+    )
+
+    n_str = json.dumps(nutrition_plan)
+
+    user_goal = UserGoal(
+        user_id=current_user.id,
+        target_workouts=15,
+        target_reps=1800,
+        target_calories=8000,
+        fitness_goal=request.fitness_goal,
+        activity_level=request.activity_level,
+        workout_plan=None,
+        nutrition_plan=n_str,
+        age=request.age,
+        gender=request.gender,
+        weight=request.weight,
+        weight_unit=request.weight_unit,
+        food_allergies=request.food_allergies,
+        health_conditions=request.health_conditions,
+        notes=request.notes,
+        timeline=None,
+        available_days=None,
+        alarm_sound=None,
+        available_time=None,
+        is_active=False,
+        has_meal_plan=True
+    )
+    db.add(user_goal)
+    await db.commit()
+    await db.refresh(user_goal)
+    
+    return MealPlanResponse(
+        goal_id=user_goal.id,
+        fitness_goal=user_goal.fitness_goal,
+        nutrition_plan=nutrition_plan,
+        created_at=user_goal.created_at
+    )
+
 
 
 @router.get("/goals/options")
