@@ -52,9 +52,71 @@ def to_exercise_response(model: Exercise) -> ExerciseResponse:
 
 @router.get("", response_model=list[ExerciseResponse])
 async def get_exercises(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Exercise).order_by(Exercise.title))
-    exercises = result.scalars().all()
-    return [to_exercise_response(e) for e in exercises]
+    try:
+        result = await db.execute(select(Exercise).order_by(Exercise.title))
+        exercises = result.scalars().all()
+        if exercises:
+            return [to_exercise_response(e) for e in exercises]
+        
+        # Fallback to dummy data if DB is empty
+        return [
+            ExerciseResponse(
+                id=1,
+                title="Push-ups",
+                primary_muscle="Chest",
+                exercise_type="Home",
+                video_url="https://example.com/pushups.mp4",
+                muscles_worked_pct={"Chest": 70, "Triceps": 20, "Shoulders": 10},
+                suggested_workouts=["Upper Body", "Full Body"],
+                instructions=["Keep body straight", "Lower until chest touches floor"],
+                safety_tips=["Don't flare elbows", "Keep core tight"],
+                created_at=datetime.utcnow(),
+                lastModifiedAt=datetime.utcnow()
+            ),
+            ExerciseResponse(
+                id=2,
+                title="Barbell Squats",
+                primary_muscle="Legs",
+                exercise_type="Gym",
+                video_url="https://example.com/squats.mp4",
+                muscles_worked_pct={"Quads": 60, "Glutes": 30, "Core": 10},
+                suggested_workouts=["Leg Day", "Full Body"],
+                instructions=["Keep chest up", "Push knees out", "Break parallel"],
+                safety_tips=["Use a spotter", "Don't round lower back"],
+                created_at=datetime.utcnow(),
+                lastModifiedAt=datetime.utcnow()
+            ),
+            ExerciseResponse(
+                id=3,
+                title="Plank",
+                primary_muscle="Core",
+                exercise_type="Home",
+                video_url="https://example.com/plank.mp4",
+                muscles_worked_pct={"Core": 80, "Shoulders": 20},
+                suggested_workouts=["Core Crusher"],
+                instructions=["Rest on forearms", "Keep body in straight line"],
+                safety_tips=["Don't let hips sag"],
+                created_at=datetime.utcnow(),
+                lastModifiedAt=datetime.utcnow()
+            ),
+            ExerciseResponse(
+                id=4,
+                title="Deadlift",
+                primary_muscle="Back",
+                exercise_type="Gym",
+                video_url="https://example.com/deadlift.mp4",
+                muscles_worked_pct={"Hamstrings": 40, "Lower Back": 40, "Glutes": 20},
+                suggested_workouts=["Pull Day", "Leg Day"],
+                instructions=["Hinge at hips", "Keep bar close to body"],
+                safety_tips=["Keep back straight", "Don't jerk the weight"],
+                created_at=datetime.utcnow(),
+                lastModifiedAt=datetime.utcnow()
+            )
+        ]
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise e
 
 
 @router.get("/{exercise_id}", response_model=ExerciseResponse)

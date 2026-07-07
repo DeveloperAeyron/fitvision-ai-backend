@@ -2,6 +2,10 @@ from __future__ import annotations
 
 import logging
 import shutil
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,6 +14,7 @@ from fastapi.responses import HTMLResponse
 from api.routes import router as count_reps_router
 from api.auth_routes import router as auth_router
 from api.exercise_routes import router as exercise_router
+from api.dashboard_routes import router as dashboard_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -28,6 +33,9 @@ async def create_db_tables():
         await conn.run_sync(Base.metadata.create_all)
         await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(50)"))
         await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS date_of_birth DATE"))
+        await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS full_name VARCHAR(100)"))
+        await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS allow_notifications BOOLEAN DEFAULT TRUE"))
+        await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS app_blocker BOOLEAN DEFAULT FALSE"))
         try:
             await conn.execute(text("ALTER TABLE user_goals ALTER COLUMN workout_plan TYPE VARCHAR(4000)"))
         except Exception:
@@ -36,6 +44,22 @@ async def create_db_tables():
             await conn.execute(text("ALTER TABLE user_goals ALTER COLUMN nutrition_plan TYPE VARCHAR(4000)"))
         except Exception:
             pass
+
+        try:
+            await conn.execute(text("ALTER TABLE user_goals ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP"))
+        except Exception:
+            pass
+        
+        try:
+            await conn.execute(text("ALTER TABLE exercises ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP"))
+        except Exception:
+            pass
+
+        try:
+            await conn.execute(text("ALTER TABLE workout_logs ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP"))
+        except Exception:
+            pass
+
 
         for col_name, col_type in [
             ("fitness_goal", "VARCHAR(100)"),
@@ -94,6 +118,7 @@ app.add_middleware(
 app.include_router(count_reps_router)
 app.include_router(auth_router)
 app.include_router(exercise_router)
+app.include_router(dashboard_router)
 
 
 @app.get("/tester", response_class=HTMLResponse)
@@ -111,4 +136,4 @@ async def read_admin():
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("main:app", host="0.0.0.0", port=8000)
+    uvicorn.run("main:app", host="0.0.0.0", port=8003)

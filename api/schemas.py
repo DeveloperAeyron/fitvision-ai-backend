@@ -14,8 +14,11 @@ class UserLogin(BaseModel):
 class UserResponse(BaseModel):
     id: int
     email: EmailStr
+    full_name: str | None = None
     gender: str | None = None
     date_of_birth: date | None = None
+    allow_notifications: bool = True
+    app_blocker: bool = False
     created_at: datetime
 
     class Config:
@@ -24,6 +27,14 @@ class UserResponse(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+class UserProfileUpdate(BaseModel):
+    full_name: str | None = None
+    email: EmailStr | None = None
+    gender: str | None = None
+    date_of_birth: date | None = None
+    allow_notifications: bool | None = None
+    app_blocker: bool | None = None
 
 class TokenData(BaseModel):
     username: str | None = None
@@ -90,6 +101,7 @@ class DashboardResponse(BaseModel):
     goals: DashboardGoals
     weekly_progress: list[WeeklyProgressDay]
     next_workout: NextWorkoutInfo
+    lastModifiedAt: datetime | None = None
 
 
 class ExerciseBase(BaseModel):
@@ -114,15 +126,13 @@ class ExerciseUpdate(ExerciseBase):
 class ExerciseResponse(ExerciseBase):
     id: int
     created_at: datetime
+    lastModifiedAt: datetime | None = None
 
     class Config:
         from_attributes = True
 
 
 class GoalCreateRequest(BaseModel):
-    target_workouts: int
-    target_reps: int
-    target_calories: int
     fitness_goal: str
     activity_level: str
     age: int | None = None
@@ -169,9 +179,18 @@ class GoalResponse(BaseModel):
     is_active: bool
     has_meal_plan: bool
     created_at: datetime
+    lastModifiedAt: datetime | None = None
 
     class Config:
         from_attributes = True
 
 
+class MealPlanResponse(BaseModel):
+    goal_id: int
+    fitness_goal: str | None = None
+    nutrition_plan: dict
+    created_at: datetime
+    lastModifiedAt: datetime | None = None
 
+    class Config:
+        from_attributes = True

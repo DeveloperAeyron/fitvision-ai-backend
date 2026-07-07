@@ -9,3 +9,4 @@ fitvisionvenv/
 postgres-portable/
 postgres-data/
 pg_server.log
+.env

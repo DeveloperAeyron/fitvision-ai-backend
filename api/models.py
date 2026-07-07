@@ -10,8 +10,11 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(50), unique=True, index=True, nullable=False)
     email: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    full_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     gender: Mapped[str | None] = mapped_column(String(50), nullable=True)
     date_of_birth: Mapped[date | None] = mapped_column(Date, nullable=True)
+    allow_notifications: Mapped[bool] = mapped_column(Boolean, default=True)
+    app_blocker: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
 
@@ -49,6 +52,11 @@ class UserGoal(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     has_meal_plan: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    @property
+    def lastModifiedAt(self) -> datetime:
+        return self.updated_at
 
 
 
@@ -62,6 +70,11 @@ class WorkoutLog(Base):
     calories: Mapped[int] = mapped_column(default=0, nullable=False)
     duration_minutes: Mapped[int] = mapped_column(default=0, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    @property
+    def lastModifiedAt(self) -> datetime:
+        return self.updated_at
 
 
 class Exercise(Base):
@@ -77,6 +90,11 @@ class Exercise(Base):
     instructions: Mapped[str | None] = mapped_column(String(2000), nullable=True)
     safety_tips: Mapped[str | None] = mapped_column(String(2000), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    @property
+    def lastModifiedAt(self) -> datetime:
+        return self.updated_at
 
 
 

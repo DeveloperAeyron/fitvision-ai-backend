@@ -342,47 +342,19 @@ async def google_login(request: GoogleLoginRequest, db: AsyncSession = Depends(g
 
 @router.get("/dashboard", response_model=DashboardResponse)
 async def get_dashboard(
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    current_user: User = Depends(get_current_user)
 ):
-    # 1. Fetch or create UserGoal
-    goal_result = await db.execute(
-        select(UserGoal).where(UserGoal.user_id == current_user.id).order_by(UserGoal.id.desc())
-    )
-    user_goal = goal_result.scalars().first()
-    if not user_goal:
-        user_goal = UserGoal(user_id=current_user.id)
-        db.add(user_goal)
-        await db.commit()
-        await db.refresh(user_goal)
-
-    # 2. Get current week range (Monday - Sunday)
-    today = datetime.utcnow().date()
-    start_of_week = datetime.combine(today - timedelta(days=today.weekday()), datetime.min.time())
-    end_of_week = start_of_week + timedelta(days=7)
-
-    # 3. Query WorkoutLog for the current week
-    logs_result = await db.execute(
-        select(WorkoutLog).where(
-            WorkoutLog.user_id == current_user.id,
-            WorkoutLog.created_at >= start_of_week,
-            WorkoutLog.created_at < end_of_week
-        )
-    )
-    logs = logs_result.scalars().all()
-
-    # 4. Calculate progress metrics
-    actual_workouts = len(logs)
-    actual_reps = sum(log.reps for log in logs)
-    actual_calories = sum(log.calories for log in logs)
-
-    if len(logs) == 0:
-        # Fallback default values mimicking the Figma screen
-        workouts_current = 11
-        reps_current = 1245
-        calories_current = 6250
-        completion_percentage = 72.0
-        weekly_progress = [
+    # Returning hardcoded dummy response as requested
+    return {
+        "username": current_user.full_name or current_user.username,
+        "email": current_user.email,
+        "completion_percentage": 72.0,
+        "goals": {
+            "workouts": {"current": 11, "target": 15, "unit": "workouts"},
+            "reps": {"current": 1245, "target": 1800, "unit": "reps"},
+            "calories": {"current": 6250, "target": 8000, "unit": "kcal"}
+        },
+        "weekly_progress": [
             {"day": "Mon", "percentage": 20.0},
             {"day": "Tue", "percentage": 50.0},
             {"day": "Wed", "percentage": 48.0},
@@ -390,75 +362,16 @@ async def get_dashboard(
             {"day": "Fri", "percentage": 40.0},
             {"day": "Sat", "percentage": 55.0},
             {"day": "Sun", "percentage": 38.0}
-        ]
-    else:
-        workouts_current = actual_workouts
-        reps_current = actual_reps
-        calories_current = actual_calories
-
-        # Average completion percentage capped at 100
-        w_pct = (workouts_current / user_goal.target_workouts) if user_goal.target_workouts > 0 else 0
-        r_pct = (reps_current / user_goal.target_reps) if user_goal.target_reps > 0 else 0
-        c_pct = (calories_current / user_goal.target_calories) if user_goal.target_calories > 0 else 0
-
-        completion_percentage = round(((w_pct + r_pct + c_pct) / 3.0) * 100, 1)
-        completion_percentage = min(completion_percentage, 100.0)
-
-        # Weekly progress day-by-day calculation
-        day_logs = {i: [] for i in range(7)}
-        for log in logs:
-            weekday = log.created_at.weekday()
-            day_logs[weekday].append(log)
-
-        weekly_progress = []
-        day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-        for i in range(7):
-            day_name = day_names[i]
-            logs_for_day = day_logs[i]
-            if not logs_for_day:
-                weekly_progress.append({"day": day_name, "percentage": 0.0})
-            else:
-                w_target_daily = user_goal.target_workouts / 7
-                r_target_daily = user_goal.target_reps / 7
-                c_target_daily = user_goal.target_calories / 7
-
-                w_act_daily = len(logs_for_day)
-                r_act_daily = sum(l.reps for l in logs_for_day)
-                c_act_daily = sum(l.calories for l in logs_for_day)
-
-                w_p = (w_act_daily / w_target_daily) if w_target_daily > 0 else 0
-                r_p = (r_act_daily / r_target_daily) if r_target_daily > 0 else 0
-                c_p = (c_act_daily / c_target_daily) if c_target_daily > 0 else 0
-
-                day_pct = round(((w_p + r_p + c_p) / 3.0) * 100, 1)
-                day_pct = min(day_pct, 100.0)
-                weekly_progress.append({"day": day_name, "percentage": day_pct})
-
-    # 5. Recommendation for Next Workout
-    next_workouts_pool = [
-        {"title": "Cardio Burn", "time": "TOMORROW 7:00 PM", "duration": "30 min", "location": "Gym", "type": "Cardio", "difficulty": "Beginner"},
-        {"title": "Lower Body Power", "time": "TOMORROW 7:00 PM", "duration": "50 min", "location": "Gym", "type": "Strength", "difficulty": "Advanced"},
-        {"title": "Core Stability", "time": "TOMORROW 6:30 PM", "duration": "20 min", "location": "Home", "type": "Core", "difficulty": "Beginner"},
-        {"title": "Upper Body Strength", "time": "TOMORROW 7:00 PM", "duration": "45 min", "location": "Gym", "type": "Strength", "difficulty": "Intermediate"},
-        {"title": "Weekend Shred", "time": "TOMORROW 10:00 AM", "duration": "60 min", "location": "Gym", "type": "HIIT", "difficulty": "Intermediate"},
-        {"title": "Active Recovery", "time": "TOMORROW 9:00 AM", "duration": "30 min", "location": "Park", "type": "Stretching", "difficulty": "Beginner"},
-        {"title": "Full Body Kickstart", "time": "TOMORROW 7:00 PM", "duration": "45 min", "location": "Gym", "type": "Strength", "difficulty": "Intermediate"},
-    ]
-    weekday_today = datetime.utcnow().weekday()
-    next_workout_data = next_workouts_pool[weekday_today]
-
-    # Combine response
-    return {
-        "username": current_user.username,
-        "email": current_user.email,
-        "completion_percentage": completion_percentage,
-        "goals": {
-            "workouts": {"current": workouts_current, "target": user_goal.target_workouts, "unit": "workouts"},
-            "reps": {"current": reps_current, "target": user_goal.target_reps, "unit": "reps"},
-            "calories": {"current": calories_current, "target": user_goal.target_calories, "unit": "kcal"}
+        ],
+        "next_workout": {
+            "title": "Full Body Kickstart",
+            "time": "TOMORROW 7:00 PM",
+            "duration": "45 min",
+            "location": "Gym",
+            "type": "Strength",
+            "difficulty": "Intermediate"
         },
-        "weekly_progress": weekly_progress,
-        "next_workout": next_workout_data
+        "lastModifiedAt": datetime.utcnow()
     }
 
 
@@ -686,9 +599,9 @@ async def create_user_goal(
 
     user_goal = UserGoal(
         user_id=current_user.id,
-        target_workouts=request.target_workouts,
-        target_reps=request.target_reps,
-        target_calories=request.target_calories,
+        target_workouts=15,
+        target_reps=1800,
+        target_calories=8000,
         fitness_goal=request.fitness_goal,
         activity_level=request.activity_level,
         workout_plan=w_str,
@@ -840,3 +753,88 @@ async def generate_meal_plan_for_goal(
 
 
 
+
+
+@router.get("/meal-plans", response_model=list[dict])
+async def get_user_meal_plans(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    from api.schemas import MealPlanResponse
+    result = await db.execute(
+        select(UserGoal)
+        .where(UserGoal.user_id == current_user.id, UserGoal.has_meal_plan == True)
+        .order_by(UserGoal.id.desc())
+    )
+    user_goals = result.scalars().all()
+    
+    meal_plans = []
+    for g in user_goals:
+        nut_plan = {}
+        if g.nutrition_plan:
+            try:
+                nut_plan = json.loads(g.nutrition_plan)
+            except Exception:
+                pass
+        meal_plans.append(
+            MealPlanResponse(
+                goal_id=g.id,
+                fitness_goal=g.fitness_goal,
+                nutrition_plan=nut_plan,
+                created_at=g.created_at
+            ).model_dump()
+        )
+    return meal_plans
+
+
+@router.get("/profile", response_model=UserResponse)
+async def get_user_profile(current_user: User = Depends(get_current_user)):
+    return UserResponse.model_validate(current_user)
+
+@router.get("/me", response_model=UserResponse)
+async def get_user_me(current_user: User = Depends(get_current_user)):
+    return UserResponse.model_validate(current_user)
+
+
+@router.put("/profile")
+async def update_user_profile(
+    profile_data: dict, # using dict here because I will import UserProfileUpdate later, or I can just use dict for now
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    from api.schemas import UserProfileUpdate, UserResponse
+    # Validate profile_data via UserProfileUpdate
+    update_schema = UserProfileUpdate(**profile_data)
+    update_data = update_schema.model_dump(exclude_unset=True)
+    
+    if "email" in update_data and update_data["email"] != current_user.email:
+        # Check if new email is already taken
+        email_result = await db.execute(select(User).where(User.email == update_data["email"]))
+        if email_result.scalars().first():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already registered"
+            )
+            
+    for key, value in update_data.items():
+        setattr(current_user, key, value)
+        
+    await db.commit()
+    await db.refresh(current_user)
+    return UserResponse.model_validate(current_user)
+
+
+from pydantic import BaseModel
+class ContactUsRequest(BaseModel):
+    email: str
+    description: str
+    file_url: str | None = None
+
+@router.post("/contact")
+async def contact_us(
+    request: ContactUsRequest,
+    current_user: User = Depends(get_current_user)
+):
+    # Dummy implementation for Contact Us
+    logger.info(f"Contact Us message from {request.email}: {request.description}")
+    return {"message": "Thank you for contacting us. Your request has been received."}
