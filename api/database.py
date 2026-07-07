@@ -4,7 +4,7 @@ import os
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql+asyncpg://postgres:password@localhost:5432/fitvision"
+    "postgresql+asyncpg://postgres:password@127.0.0.1:5432/fitvision"
 )
 
 engine = create_async_engine(DATABASE_URL, echo=True)
