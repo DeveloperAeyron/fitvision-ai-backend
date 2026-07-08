@@ -108,6 +108,7 @@ class ExerciseBase(BaseModel):
     title: str
     primary_muscle: str
     exercise_type: str
+    location_type: str | None = "both"
     video_url: str | None = None
     muscles_worked_pct: dict[str, float] | None = None
     suggested_workouts: list[str] | None = None

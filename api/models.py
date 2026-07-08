@@ -85,9 +85,10 @@ class Exercise(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     title: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
-    primary_muscle: Mapped[str] = mapped_column(String(100), nullable=False)
+    primary_muscle: Mapped[str] = mapped_column(String(50), nullable=False)
     exercise_type: Mapped[str] = mapped_column(String(50), nullable=False)
-    video_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    location_type: Mapped[str | None] = mapped_column(String(50), default="both", nullable=True)
+    video_url: Mapped[str | None] = mapped_column(String(200), nullable=True)
     muscles_worked_pct: Mapped[str | None] = mapped_column(String(500), nullable=True)
     suggested_workouts: Mapped[str | None] = mapped_column(String(500), nullable=True)
     instructions: Mapped[str | None] = mapped_column(String(2000), nullable=True)

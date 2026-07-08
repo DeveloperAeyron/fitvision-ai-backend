@@ -38,29 +38,30 @@ async def create_db_tables():
         await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS app_blocker BOOLEAN DEFAULT FALSE"))
         try:
             await conn.execute(text("ALTER TABLE user_goals ALTER COLUMN workout_plan TYPE VARCHAR(4000)"))
-        except Exception:
-            pass
+        except Exception as e:
+            print("DB Migration Error:", e)
         try:
             await conn.execute(text("ALTER TABLE user_goals ALTER COLUMN nutrition_plan TYPE VARCHAR(4000)"))
-        except Exception:
-            pass
+        except Exception as e:
+            print("DB Migration Error:", e)
 
         try:
             await conn.execute(text("ALTER TABLE user_goals ADD COLUMN IF NOT EXISTS food_allergies VARCHAR(500)"))
             await conn.execute(text("ALTER TABLE user_goals ADD COLUMN IF NOT EXISTS health_conditions VARCHAR(500)"))
             await conn.execute(text("ALTER TABLE user_goals ADD COLUMN IF NOT EXISTS notes VARCHAR(1000)"))
-        except Exception:
-            pass
+        except Exception as e:
+            print("DB Migration Error:", e)
 
         try:
             await conn.execute(text("ALTER TABLE user_goals ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP"))
-        except Exception:
-            pass
+        except Exception as e:
+            print("DB Migration Error:", e)
         
         try:
+            await conn.execute(text("ALTER TABLE exercises ADD COLUMN IF NOT EXISTS location_type VARCHAR(50) DEFAULT 'both'"))
             await conn.execute(text("ALTER TABLE exercises ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP"))
-        except Exception:
-            pass
+        except Exception as e:
+            print("DB Migration Error:", e)
 
         try:
             await conn.execute(text("ALTER TABLE workout_logs ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP"))
