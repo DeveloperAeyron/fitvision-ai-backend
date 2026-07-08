@@ -191,6 +191,7 @@ class GoalResponse(BaseModel):
     time_of_day: str | None = None
     is_active: bool
     has_meal_plan: bool
+    image_url: str | None = "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=400&auto=format&fit=crop"
     created_at: datetime
     lastModifiedAt: datetime | None = None
 
@@ -202,6 +203,7 @@ class MealPlanResponse(BaseModel):
     goal_id: int
     fitness_goal: str | None = None
     nutrition_plan: dict
+    image_url: str | None = "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=400&auto=format&fit=crop"
     created_at: datetime
     lastModifiedAt: datetime | None = None
 
