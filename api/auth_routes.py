@@ -809,6 +809,43 @@ async def generate_meal_plan_for_goal(
 
 
 
+@router.delete("/goals/{goal_id}")
+async def delete_user_goal(
+    goal_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(select(UserGoal).where(UserGoal.id == goal_id, UserGoal.user_id == current_user.id))
+    user_goal = result.scalars().first()
+    if not user_goal:
+        raise HTTPException(status_code=404, detail="Goal not found")
+        
+    await db.delete(user_goal)
+    await db.commit()
+    return {"message": "Goal deleted successfully"}
+
+
+@router.delete("/meal-plans/{goal_id}")
+async def delete_user_meal_plan(
+    goal_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(select(UserGoal).where(UserGoal.id == goal_id, UserGoal.user_id == current_user.id))
+    user_goal = result.scalars().first()
+    if not user_goal:
+        raise HTTPException(status_code=404, detail="Meal plan not found")
+        
+    if not user_goal.workout_plan:
+        await db.delete(user_goal)
+    else:
+        user_goal.has_meal_plan = False
+        user_goal.nutrition_plan = None
+    
+    await db.commit()
+    return {"message": "Meal plan deleted successfully"}
+
+
 @router.get("/meal-plans", response_model=list[dict])
 async def get_user_meal_plans(
     current_user: User = Depends(get_current_user),
@@ -876,6 +913,35 @@ async def update_user_profile(
     await db.commit()
     await db.refresh(current_user)
     return UserResponse.model_validate(current_user)
+
+
+from sqlalchemy import func
+from api.models import Exercise
+
+@router.get("/sync/last-modified")
+async def get_last_modified(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    goal_res = await db.execute(
+        select(func.max(UserGoal.updated_at)).where(UserGoal.user_id == current_user.id)
+    )
+    max_goal_ts = goal_res.scalar()
+
+    log_res = await db.execute(
+        select(func.max(WorkoutLog.updated_at)).where(WorkoutLog.user_id == current_user.id)
+    )
+    max_log_ts = log_res.scalar()
+
+    ex_res = await db.execute(
+        select(func.max(Exercise.updated_at))
+    )
+    max_ex_ts = ex_res.scalar()
+
+    timestamps = [ts for ts in [current_user.created_at, max_goal_ts, max_log_ts, max_ex_ts] if ts is not None]
+    latest = max(timestamps) if timestamps else None
+    
+    return {"last_modified": latest.isoformat() if latest else None}
 
 
 from pydantic import BaseModel
