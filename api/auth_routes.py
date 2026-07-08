@@ -460,39 +460,104 @@ def generate_workout_and_nutrition_plans(fitness_goal: str, activity_level: str,
         })
 
     # Nutrition Plan
+    meal_days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
     if "loss" in goal or "weight" in goal:
         cal = 1600 if "sedentary" in level else (1800 if "light" in level else 2000)
-        nutrition_plan = {
-            "daily_calories": cal,
-            "macronutrients": {"protein_g": 135, "carbs_g": 165, "fats_g": 55},
-            "meal_suggestions": {
-                "breakfast": "Egg white omelet with spinach and 1 slice whole wheat toast",
-                "lunch": "Mixed greens salad with 150g grilled chicken breast and light dressing",
-                "dinner": "150g baked white fish with steamed broccoli and half a cup of quinoa"
+        daily_totals = {"calories": cal, "protein_g": 135, "carbs_g": 165, "fats_g": 55, "fiber_g": 30}
+        meals = [
+            {
+                "type": "Breakfast",
+                "name": "Egg White Omelet with Spinach",
+                "image_url": "https://images.unsplash.com/photo-1525351484163-7529414344d8?q=80&w=400&auto=format&fit=crop",
+                "ingredients": ["3 egg whites", "1 cup spinach", "1 slice whole wheat toast", "Olive oil spray"],
+                "steps": ["Spray pan with olive oil.", "Sauté spinach until wilted.", "Pour in egg whites and cook until set.", "Serve with toast."],
+                "health_notes": "High protein, low calorie. Spinach provides excellent iron."
+            },
+            {
+                "type": "Lunch",
+                "name": "Grilled Chicken Salad",
+                "image_url": "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=400&auto=format&fit=crop",
+                "ingredients": ["150g chicken breast", "Mixed greens", "Cherry tomatoes", "Light vinaigrette"],
+                "steps": ["Grill chicken breast until cooked through.", "Chop greens and tomatoes.", "Toss together with vinaigrette."],
+                "health_notes": "Lean protein and high volume veggies keep you full."
+            },
+            {
+                "type": "Dinner",
+                "name": "Baked White Fish & Quinoa",
+                "image_url": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?q=80&w=400&auto=format&fit=crop",
+                "ingredients": ["150g white fish", "1/2 cup cooked quinoa", "Steamed broccoli"],
+                "steps": ["Bake fish at 400F for 15 mins.", "Steam broccoli.", "Serve over warm quinoa."],
+                "health_notes": "Light easily digestible protein for the evening."
             }
-        }
+        ]
     elif "gain" in goal or "muscle" in goal or "hypertrophy" in goal:
         cal = 2400 if "sedentary" in level else (2700 if "light" in level else 3000)
-        nutrition_plan = {
-            "daily_calories": cal,
-            "macronutrients": {"protein_g": 160, "carbs_g": 350, "fats_g": 80},
-            "meal_suggestions": {
-                "breakfast": "Oatmeal (1 cup) with 2 scoops protein powder, peanut butter, and banana",
-                "lunch": "200g lean beef mince with 1.5 cups white jasmine rice and green beans",
-                "dinner": "200g grilled salmon filet with large sweet potato and roasted asparagus"
+        daily_totals = {"calories": cal, "protein_g": 160, "carbs_g": 350, "fats_g": 80, "fiber_g": 35}
+        meals = [
+            {
+                "type": "Breakfast",
+                "name": "Protein Oatmeal",
+                "image_url": "https://images.unsplash.com/photo-1517673132405-a56a62b18caf?q=80&w=400&auto=format&fit=crop",
+                "ingredients": ["1 cup oats", "2 scoops whey protein", "1 tbsp peanut butter", "1 banana"],
+                "steps": ["Cook oats with water or milk.", "Stir in protein powder while warm.", "Top with sliced banana and peanut butter."],
+                "health_notes": "Dense calories for muscle building and energy."
+            },
+            {
+                "type": "Lunch",
+                "name": "Beef & Rice Bowl",
+                "image_url": "https://images.unsplash.com/photo-1543339308-43e59d6b73a6?q=80&w=400&auto=format&fit=crop",
+                "ingredients": ["200g lean beef mince", "1.5 cups jasmine rice", "Green beans", "Soy sauce"],
+                "steps": ["Brown beef in a skillet.", "Steam rice and beans.", "Combine and drizzle with soy sauce."],
+                "health_notes": "High carbs to replenish glycogen post-workout."
+            },
+            {
+                "type": "Dinner",
+                "name": "Grilled Salmon & Sweet Potato",
+                "image_url": "https://images.unsplash.com/photo-1467003909585-2f8a72700288?q=80&w=400&auto=format&fit=crop",
+                "ingredients": ["200g salmon filet", "1 large sweet potato", "Roasted asparagus"],
+                "steps": ["Grill salmon for 10 mins.", "Bake sweet potato until soft.", "Roast asparagus with a pinch of salt."],
+                "health_notes": "Rich in omega-3s for joint health and recovery."
             }
-        }
+        ]
     else:
         cal = 1800 if "sedentary" in level else (2100 if "light" in level else 2400)
-        nutrition_plan = {
-            "daily_calories": cal,
-            "macronutrients": {"protein_g": 120, "carbs_g": 260, "fats_g": 60},
-            "meal_suggestions": {
-                "breakfast": "Greek yogurt bowl with honey, chia seeds, and mixed berries",
-                "lunch": "Turkey breast wrap with whole wheat tortilla, avocado, lettuce, and tomatoes",
-                "dinner": "Grilled chicken breast with large portion of roasted Mediterranean vegetables"
+        daily_totals = {"calories": cal, "protein_g": 120, "carbs_g": 260, "fats_g": 60, "fiber_g": 28}
+        meals = [
+            {
+                "type": "Breakfast",
+                "name": "Greek Yogurt Bowl",
+                "image_url": "https://images.unsplash.com/photo-1493770348161-369560ae357d?q=80&w=400&auto=format&fit=crop",
+                "ingredients": ["1 cup Greek yogurt", "1 tbsp honey", "Chia seeds", "Mixed berries"],
+                "steps": ["Scoop yogurt into a bowl.", "Top with berries and seeds.", "Drizzle with honey."],
+                "health_notes": "Probiotics for gut health."
+            },
+            {
+                "type": "Lunch",
+                "name": "Turkey Breast Wrap",
+                "image_url": "https://images.unsplash.com/photo-1626804475297-41607ea0d5eb?q=80&w=400&auto=format&fit=crop",
+                "ingredients": ["Whole wheat tortilla", "Sliced turkey breast", "Avocado", "Lettuce and tomato"],
+                "steps": ["Lay tortilla flat.", "Layer turkey, avocado, and veggies.", "Roll tightly and slice in half."],
+                "health_notes": "Balanced macronutrients for sustained midday energy."
+            },
+            {
+                "type": "Dinner",
+                "name": "Chicken & Mediterranean Veggies",
+                "image_url": "https://images.unsplash.com/photo-1532550907401-a500c9a57435?q=80&w=400&auto=format&fit=crop",
+                "ingredients": ["150g chicken breast", "Zucchini", "Bell peppers", "Olive oil"],
+                "steps": ["Chop veggies and toss in olive oil.", "Roast alongside chicken at 400F for 25 mins."],
+                "health_notes": "Rich in vitamins and antioxidants."
             }
-        }
+        ]
+        
+    nutrition_plan = {
+        "daily_totals": daily_totals,
+        "days": []
+    }
+    for day in meal_days:
+        nutrition_plan["days"].append({
+            "day": day,
+            "meals": meals
+        })
         
     return workout_plan, nutrition_plan
 
