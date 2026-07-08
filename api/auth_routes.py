@@ -596,7 +596,6 @@ async def create_user_goal(
     )
 
     w_str = json.dumps(workout_plan)
-    n_str = json.dumps(nutrition_plan)
     days_str = json.dumps(request.days) if request.days else None
 
     user_goal = UserGoal(
@@ -607,7 +606,7 @@ async def create_user_goal(
         fitness_goal=request.fitness_goal,
         activity_level=request.activity_level,
         workout_plan=w_str,
-        nutrition_plan=n_str,
+        nutrition_plan=None,
         age=request.age,
         gender=request.gender,
         weight=request.weight,
@@ -739,12 +738,16 @@ async def get_user_goals(
     db: AsyncSession = Depends(get_db)
 ):
     goal_res = await db.execute(
-        select(UserGoal).where(UserGoal.user_id == current_user.id).order_by(UserGoal.id.desc())
+        select(UserGoal)
+        .where(UserGoal.user_id == current_user.id)
+        .where(UserGoal.is_active == True)
+        .where(UserGoal.workout_plan.is_not(None))
+        .order_by(UserGoal.id.desc())
     )
     user_goals = goal_res.scalars().all()
     
     if not user_goals:
-        workout_plan, nutrition_plan = generate_workout_and_nutrition_plans("General Health", "Active")
+        workout_plan, _ = generate_workout_and_nutrition_plans("General Health", "Active")
         default_goal = UserGoal(
             user_id=current_user.id,
             target_workouts=15,
@@ -753,7 +756,8 @@ async def get_user_goals(
             fitness_goal="General Health",
             activity_level="Active",
             workout_plan=json.dumps(workout_plan),
-            nutrition_plan=json.dumps(nutrition_plan)
+            nutrition_plan=None,
+            is_active=True
         )
         db.add(default_goal)
         await db.commit()
