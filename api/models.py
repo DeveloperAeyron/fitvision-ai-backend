@@ -10,6 +10,7 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(50), unique=True, index=True, nullable=False)
     email: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    profile_image: Mapped[str | None] = mapped_column(String(500), nullable=True)
     full_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     gender: Mapped[str | None] = mapped_column(String(50), nullable=True)
     date_of_birth: Mapped[date | None] = mapped_column(Date, nullable=True)

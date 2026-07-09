@@ -14,7 +14,7 @@ class UserLogin(BaseModel):
 class UserResponse(BaseModel):
     id: int
     email: EmailStr
-    full_name: str | None = None
+    profile_image: str | None = None
     gender: str | None = None
     date_of_birth: date | None = None
     allow_notifications: bool = True
@@ -29,7 +29,7 @@ class Token(BaseModel):
     token_type: str
 
 class UserProfileUpdate(BaseModel):
-    full_name: str | None = None
+    profile_image: str | None = None
     email: EmailStr | None = None
     gender: str | None = None
     date_of_birth: date | None = None

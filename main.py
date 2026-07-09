@@ -33,6 +33,7 @@ async def create_db_tables():
         await conn.run_sync(Base.metadata.create_all)
         await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(50)"))
         await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS date_of_birth DATE"))
+        await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_image VARCHAR(500)"))
         await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS full_name VARCHAR(100)"))
         await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS allow_notifications BOOLEAN DEFAULT TRUE"))
         await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS app_blocker BOOLEAN DEFAULT FALSE"))
