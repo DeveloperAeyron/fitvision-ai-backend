@@ -1257,7 +1257,7 @@ ALTERNATIVE_MEALS = {
 }
 
 
-def get_alternative_meal(goal_str: str, meal_type: str, current_meal_name: str) -> dict:
+def get_alternative_meal(goal_str: str, meal_type: str, current_meal_name: str, swap_to_name: str | None = None) -> dict:
     g = goal_str.lower().strip()
     if "loss" in g or "weight" in g:
         category = "loss"
@@ -1271,6 +1271,11 @@ def get_alternative_meal(goal_str: str, meal_type: str, current_meal_name: str) 
         mt = "Breakfast"
 
     options = ALTERNATIVE_MEALS.get(category, {}).get(mt, [])
+    if swap_to_name:
+        for opt in options:
+            if opt["name"].lower() == swap_to_name.lower():
+                return opt
+
     for opt in options:
         if opt["name"].lower() != current_meal_name.lower():
             return opt
@@ -1283,11 +1288,16 @@ def get_alternative_meal(goal_str: str, meal_type: str, current_meal_name: str) 
         "image_url": "https://images.unsplash.com/photo-1493770348161-369560ae357d?q=80&w=400&auto=format&fit=crop",
         "ingredients": ["Various healthy ingredients"],
         "steps": ["Prepare and enjoy."],
-        "health_notes": "Balanced nutritious meal."
+        "health_notes": "Balanced nutritious meal.",
+        "calories": 400,
+        "protein_g": 20,
+        "carbs_g": 40,
+        "fats_g": 15,
+        "fiber_g": 5
     }
 
 
-def perform_swap_logic(nut_plan: dict, day_name: str, meal_type: str, fitness_goal: str) -> dict:
+def perform_swap_logic(nut_plan: dict, day_name: str, meal_type: str, fitness_goal: str, swap_to_name: str | None = None) -> dict:
     days = nut_plan.get("days", [])
     target_day = None
     for d in days:
@@ -1309,7 +1319,7 @@ def perform_swap_logic(nut_plan: dict, day_name: str, meal_type: str, fitness_go
         return nut_plan
 
     current_meal_name = target_meal.get("name", "")
-    new_meal = get_alternative_meal(fitness_goal, meal_type, current_meal_name)
+    new_meal = get_alternative_meal(fitness_goal, meal_type, current_meal_name, swap_to_name=swap_to_name)
     target_meal.update(new_meal)
     target_meal["completed"] = False
 
@@ -1357,7 +1367,9 @@ async def swap_meal_plan_meal(
         except Exception:
             raise HTTPException(status_code=500, detail="Failed to parse saved nutrition plan")
 
-        updated_plan = perform_swap_logic(nut_plan, request.day, request.meal_type, user_goal.fitness_goal or "General Health")
+        updated_plan = perform_swap_logic(
+            nut_plan, request.day, request.meal_type, user_goal.fitness_goal or "General Health", swap_to_name=request.swap_to_name
+        )
         
         user_goal.nutrition_plan = json.dumps(updated_plan)
         await db.commit()
@@ -1373,12 +1385,52 @@ async def swap_meal_plan_meal(
 
     elif request.nutrition_plan is not None:
         fitness_goal = request.nutrition_plan.get("fitness_goal", "General Health")
-        updated_plan = perform_swap_logic(request.nutrition_plan, request.day, request.meal_type, fitness_goal)
+        updated_plan = perform_swap_logic(
+            request.nutrition_plan, request.day, request.meal_type, fitness_goal, swap_to_name=request.swap_to_name
+        )
         return {
             "nutrition_plan": updated_plan
         }
     else:
         raise HTTPException(status_code=400, detail="Either goal_id or nutrition_plan must be provided")
+
+
+from api.schemas import SwapOptionsRequest
+
+@router.post("/meal-plans/swap-options", response_model=list[dict])
+async def get_meal_swap_options(
+    request: SwapOptionsRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    fitness_goal = "General Health"
+    
+    if request.goal_id is not None:
+        result = await db.execute(
+            select(UserGoal).where(UserGoal.id == request.goal_id, UserGoal.user_id == current_user.id)
+        )
+        user_goal = result.scalars().first()
+        if not user_goal:
+            raise HTTPException(status_code=404, detail="Meal plan not found")
+        fitness_goal = user_goal.fitness_goal or "General Health"
+        
+    elif request.nutrition_plan is not None:
+        fitness_goal = request.nutrition_plan.get("fitness_goal", "General Health")
+
+    g = fitness_goal.lower().strip()
+    if "loss" in g or "weight" in g:
+        category = "loss"
+    elif "gain" in g or "muscle" in g or "hypertrophy" in g:
+        category = "gain"
+    else:
+        category = "general"
+
+    mt = request.meal_type.capitalize().strip()
+    if mt not in ["Breakfast", "Lunch", "Dinner"]:
+        mt = "Breakfast"
+
+    options = ALTERNATIVE_MEALS.get(category, {}).get(mt, [])
+    return options
 
 
 @router.post("/meal-plans/{goal_id}/activate", response_model=MealPlanResponse)

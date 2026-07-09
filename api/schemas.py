@@ -217,6 +217,14 @@ class SwapMealRequest(BaseModel):
     nutrition_plan: dict | None = None
     day: str
     meal_type: str
+    swap_to_name: str | None = None
+
+
+class SwapOptionsRequest(BaseModel):
+    goal_id: int | None = None
+    nutrition_plan: dict | None = None
+    day: str
+    meal_type: str
 
 
 class CompleteMealRequest(BaseModel):
