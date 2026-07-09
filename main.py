@@ -88,7 +88,7 @@ async def create_db_tables():
             ("created_at", "TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP")
         ]:
             try:
-                await conn.execute(text(f"ALTER TABLE user_goals ADD COLUMN {col_name} {col_type}"))
+                await conn.execute(text(f"ALTER TABLE user_goals ADD COLUMN IF NOT EXISTS {col_name} {col_type}"))
             except Exception:
                 pass
         
