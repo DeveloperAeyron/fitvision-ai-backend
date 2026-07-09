@@ -863,23 +863,6 @@ async def get_user_goals(
     )
     user_goals = goal_res.scalars().all()
     
-    if not user_goals:
-        workout_plan, _ = generate_workout_and_nutrition_plans("General Health", "Active")
-        default_goal = UserGoal(
-            user_id=current_user.id,
-            target_workouts=15,
-            target_reps=1800,
-            target_calories=8000,
-            fitness_goal="General Health",
-            activity_level="Active",
-            workout_plan=json.dumps(workout_plan),
-            nutrition_plan=None,
-            is_active=True
-        )
-        db.add(default_goal)
-        await db.commit()
-        await db.refresh(default_goal)
-        user_goals = [default_goal]
 
     workouts_current, reps_current, calories_current = await calculate_weekly_progress(current_user.id, db)
     return [to_goal_response(g, workouts_current, reps_current, calories_current) for g in user_goals]
