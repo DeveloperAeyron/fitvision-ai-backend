@@ -600,9 +600,15 @@ def generate_workout_and_nutrition_plans(fitness_goal: str, activity_level: str,
         "days": []
     }
     for day in meal_days:
+        day_meals = []
+        for m in meals:
+            m_copy = m.copy()
+            m_copy["completed"] = False
+            day_meals.append(m_copy)
         nutrition_plan["days"].append({
             "day": day,
-            "meals": meals
+            "actual_totals": {"calories": 0, "protein_g": 0, "carbs_g": 0, "fats_g": 0, "fiber_g": 0},
+            "meals": day_meals
         })
         
     return workout_plan, nutrition_plan
@@ -1305,6 +1311,25 @@ def perform_swap_logic(nut_plan: dict, day_name: str, meal_type: str, fitness_go
     current_meal_name = target_meal.get("name", "")
     new_meal = get_alternative_meal(fitness_goal, meal_type, current_meal_name)
     target_meal.update(new_meal)
+    target_meal["completed"] = False
+
+    # Recalculate actual_totals for the day
+    actual_totals = {
+        "calories": 0,
+        "protein_g": 0,
+        "carbs_g": 0,
+        "fats_g": 0,
+        "fiber_g": 0
+    }
+    for m in meals:
+        if m.get("completed", False):
+            actual_totals["calories"] += m.get("calories", 0)
+            actual_totals["protein_g"] += m.get("protein_g", 0)
+            actual_totals["carbs_g"] += m.get("carbs_g", 0)
+            actual_totals["fats_g"] += m.get("fats_g", 0)
+            actual_totals["fiber_g"] += m.get("fiber_g", 0)
+    target_day["actual_totals"] = actual_totals
+
     return nut_plan
 
 
@@ -1379,6 +1404,84 @@ async def activate_user_meal_plan(
         except Exception:
             pass
             
+    return MealPlanResponse(
+        goal_id=user_goal.id,
+        fitness_goal=user_goal.fitness_goal,
+        nutrition_plan=nut_plan,
+        created_at=user_goal.created_at
+    )
+
+
+from api.schemas import CompleteMealRequest
+
+@router.post("/meal-plans/complete-meal", response_model=MealPlanResponse)
+async def complete_meal_plan_meal(
+    request: CompleteMealRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(
+        select(UserGoal).where(UserGoal.id == request.goal_id, UserGoal.user_id == current_user.id)
+    )
+    user_goal = result.scalars().first()
+    if not user_goal:
+        raise HTTPException(status_code=404, detail="Meal plan not found")
+        
+    if not user_goal.nutrition_plan:
+        raise HTTPException(status_code=400, detail="Meal plan does not contain a nutrition plan")
+
+    try:
+        nut_plan = json.loads(user_goal.nutrition_plan)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to parse saved nutrition plan")
+
+    # Locate day and meal
+    days = nut_plan.get("days", [])
+    target_day = None
+    for d in days:
+        if d.get("day", "").lower() == request.day.lower():
+            target_day = d
+            break
+            
+    if not target_day:
+        raise HTTPException(status_code=404, detail=f"Day '{request.day}' not found in nutrition plan")
+
+    meals = target_day.get("meals", [])
+    target_meal = None
+    for m in meals:
+        if m.get("type", "").lower() == request.meal_type.lower():
+            target_meal = m
+            break
+            
+    if not target_meal:
+        raise HTTPException(status_code=404, detail=f"Meal type '{request.meal_type}' not found in day '{request.day}'")
+
+    # Update completed status
+    target_meal["completed"] = request.completed
+
+    # Recalculate actual_totals for the day
+    actual_totals = {
+        "calories": 0,
+        "protein_g": 0,
+        "carbs_g": 0,
+        "fats_g": 0,
+        "fiber_g": 0
+    }
+    for m in meals:
+        if m.get("completed", False):
+            actual_totals["calories"] += m.get("calories", 0)
+            actual_totals["protein_g"] += m.get("protein_g", 0)
+            actual_totals["carbs_g"] += m.get("carbs_g", 0)
+            actual_totals["fats_g"] += m.get("fats_g", 0)
+            actual_totals["fiber_g"] += m.get("fiber_g", 0)
+            
+    target_day["actual_totals"] = actual_totals
+
+    user_goal.nutrition_plan = json.dumps(nut_plan)
+    await db.commit()
+    await db.refresh(user_goal)
+
+    from api.schemas import MealPlanResponse
     return MealPlanResponse(
         goal_id=user_goal.id,
         fitness_goal=user_goal.fitness_goal,

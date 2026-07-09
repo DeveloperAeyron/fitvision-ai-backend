@@ -217,3 +217,10 @@ class SwapMealRequest(BaseModel):
     nutrition_plan: dict | None = None
     day: str
     meal_type: str
+
+
+class CompleteMealRequest(BaseModel):
+    goal_id: int
+    day: str
+    meal_type: str
+    completed: bool = True
