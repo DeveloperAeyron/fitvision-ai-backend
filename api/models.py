@@ -1,5 +1,5 @@
 from datetime import datetime, date
-from sqlalchemy import String, DateTime, Date, ForeignKey, Integer, Float, Boolean
+from sqlalchemy import String, DateTime, Date, ForeignKey, Integer, Float, Boolean, Text
 from sqlalchemy.orm import Mapped, mapped_column
 from api.database import Base
 
@@ -38,8 +38,8 @@ class UserGoal(Base):
     target_calories: Mapped[int] = mapped_column(default=8000, nullable=False)
     fitness_goal: Mapped[str | None] = mapped_column(String(100), nullable=True)
     activity_level: Mapped[str | None] = mapped_column(String(50), nullable=True)
-    workout_plan: Mapped[str | None] = mapped_column(String(4000), nullable=True)
-    nutrition_plan: Mapped[str | None] = mapped_column(String(4000), nullable=True)
+    workout_plan: Mapped[str | None] = mapped_column(Text, nullable=True)
+    nutrition_plan: Mapped[str | None] = mapped_column(Text, nullable=True)
     
     age: Mapped[int | None] = mapped_column(Integer, nullable=True)
     gender: Mapped[str | None] = mapped_column(String(50), nullable=True)

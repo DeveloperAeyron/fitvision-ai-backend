@@ -37,11 +37,11 @@ async def create_db_tables():
         await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS allow_notifications BOOLEAN DEFAULT TRUE"))
         await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS app_blocker BOOLEAN DEFAULT FALSE"))
         try:
-            await conn.execute(text("ALTER TABLE user_goals ALTER COLUMN workout_plan TYPE VARCHAR(4000)"))
+            await conn.execute(text("ALTER TABLE user_goals ALTER COLUMN workout_plan TYPE TEXT"))
         except Exception as e:
             print("DB Migration Error:", e)
         try:
-            await conn.execute(text("ALTER TABLE user_goals ALTER COLUMN nutrition_plan TYPE VARCHAR(4000)"))
+            await conn.execute(text("ALTER TABLE user_goals ALTER COLUMN nutrition_plan TYPE TEXT"))
         except Exception as e:
             print("DB Migration Error:", e)
 
