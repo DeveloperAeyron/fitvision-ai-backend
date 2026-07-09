@@ -915,6 +915,12 @@ async def generate_meal_plan_for_goal(
     if not user_goal:
         raise HTTPException(status_code=404, detail="Goal not found")
         
+    if not user_goal.nutrition_plan:
+        _, nutrition_plan = generate_workout_and_nutrition_plans(
+            user_goal.fitness_goal, user_goal.activity_level
+        )
+        user_goal.nutrition_plan = json.dumps(nutrition_plan)
+        
     user_goal.has_meal_plan = True
     await db.commit()
     await db.refresh(user_goal)
