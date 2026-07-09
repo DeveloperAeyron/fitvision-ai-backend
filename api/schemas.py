@@ -209,3 +209,10 @@ class MealPlanResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class SwapMealRequest(BaseModel):
+    goal_id: int | None = None
+    nutrition_plan: dict | None = None
+    day: str
+    meal_type: str

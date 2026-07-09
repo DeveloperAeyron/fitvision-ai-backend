@@ -919,7 +919,7 @@ async def get_user_meal_plans(
     from api.schemas import MealPlanResponse
     result = await db.execute(
         select(UserGoal)
-        .where(UserGoal.user_id == current_user.id, UserGoal.has_meal_plan == True)
+        .where(UserGoal.user_id == current_user.id, UserGoal.has_meal_plan == True, UserGoal.is_active == True)
         .order_by(UserGoal.id.desc())
     )
     user_goals = result.scalars().all()
@@ -941,6 +941,314 @@ async def get_user_meal_plans(
             ).model_dump()
         )
     return meal_plans
+
+
+ALTERNATIVE_MEALS = {
+    "loss": {
+        "Breakfast": [
+            {
+                "type": "Breakfast",
+                "name": "Avocado Toast with Poached Egg",
+                "image_url": "https://images.unsplash.com/photo-1525351484163-7529414344d8?q=80&w=400&auto=format&fit=crop",
+                "ingredients": ["1 slice whole wheat bread", "1/2 avocado", "1 poached egg", "Salt and pepper"],
+                "steps": ["Toast the bread.", "Mash avocado and spread on toast.", "Top with poached egg.", "Season to taste."],
+                "health_notes": "Healthy fats from avocado and high-quality protein from egg."
+            },
+            {
+                "type": "Breakfast",
+                "name": "Chia Seed Pudding",
+                "image_url": "https://images.unsplash.com/photo-1517673132405-a56a62b18caf?q=80&w=400&auto=format&fit=crop",
+                "ingredients": ["3 tbsp chia seeds", "1 cup almond milk", "1 tsp honey", "Mixed berries"],
+                "steps": ["Mix chia seeds, almond milk, and honey in a jar.", "Refrigerate overnight.", "Top with fresh berries before serving."],
+                "health_notes": "Rich in fiber and omega-3 fatty acids."
+            }
+        ],
+        "Lunch": [
+            {
+                "type": "Lunch",
+                "name": "Turkey and Hummus Wrap",
+                "image_url": "https://images.unsplash.com/photo-1626804475297-41607ea0d5eb?q=80&w=400&auto=format&fit=crop",
+                "ingredients": ["1 whole wheat tortilla", "100g sliced turkey breast", "2 tbsp hummus", "Spinach and cucumber"],
+                "steps": ["Spread hummus on the tortilla.", "Layer turkey and fresh vegetables.", "Roll tightly and serve."],
+                "health_notes": "High protein, low fat, and packed with vitamins."
+            },
+            {
+                "type": "Lunch",
+                "name": "Quinoa Salad Bowl",
+                "image_url": "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=400&auto=format&fit=crop",
+                "ingredients": ["1 cup cooked quinoa", "Black beans", "Sweet corn", "Lime-cilantro dressing"],
+                "steps": ["Combine quinoa, beans, and corn in a bowl.", "Toss with dressing.", "Serve chilled."],
+                "health_notes": "Fiber-rich and plant-based protein source."
+            }
+        ],
+        "Dinner": [
+            {
+                "type": "Dinner",
+                "name": "Tofu Vegetable Stir-Fry",
+                "image_url": "https://images.unsplash.com/photo-1532550907401-a500c9a57435?q=80&w=400&auto=format&fit=crop",
+                "ingredients": ["150g firm tofu", "Mixed stir-fry veggies", "1 tbsp low-sodium soy sauce", "Olive oil"],
+                "steps": ["Cube tofu and pan-fry until golden.", "Sauté veggies in a splash of olive oil.", "Combine and stir in soy sauce."],
+                "health_notes": "Low calorie, mineral-rich, and entirely plant-based."
+            },
+            {
+                "type": "Dinner",
+                "name": "Baked Salmon with Asparagus",
+                "image_url": "https://images.unsplash.com/photo-1467003909585-2f8a72700288?q=80&w=400&auto=format&fit=crop",
+                "ingredients": ["150g salmon filet", "1 bunch asparagus", "Lemon slices", "Olive oil"],
+                "steps": ["Preheat oven to 400F.", "Place salmon and asparagus on a baking sheet.", "Drizzle with oil, top with lemon, and bake for 12-15 mins."],
+                "health_notes": "Omega-3 rich dinner for cell repair and metabolic health."
+            }
+        ]
+    },
+    "gain": {
+        "Breakfast": [
+            {
+                "type": "Breakfast",
+                "name": "Scrambled Eggs & Whole Wheat Bagel",
+                "image_url": "https://images.unsplash.com/photo-1525351484163-7529414344d8?q=80&w=400&auto=format&fit=crop",
+                "ingredients": ["3 whole eggs", "1 whole wheat bagel", "1 tbsp butter", "Spinach"],
+                "steps": ["Scramble eggs in butter.", "Toast bagel.", "Serve together with fresh spinach."],
+                "health_notes": "Calorie dense, high protein, and loaded with essential nutrients."
+            },
+            {
+                "type": "Breakfast",
+                "name": "Peanut Butter Banana Toast",
+                "image_url": "https://images.unsplash.com/photo-1517673132405-a56a62b18caf?q=80&w=400&auto=format&fit=crop",
+                "ingredients": ["2 slices thick whole grain bread", "2 tbsp peanut butter", "1 banana", "Chia seeds"],
+                "steps": ["Toast the bread.", "Spread peanut butter evenly.", "Top with sliced banana and sprinkle chia seeds."],
+                "health_notes": "High healthy fats and complex carbs for energy."
+            }
+        ],
+        "Lunch": [
+            {
+                "type": "Lunch",
+                "name": "Tuna Pasta Salad",
+                "image_url": "https://images.unsplash.com/photo-1543339308-43e59d6b73a6?q=80&w=400&auto=format&fit=crop",
+                "ingredients": ["150g canned tuna", "1.5 cups cooked whole wheat pasta", "1 tbsp olive oil mayonnaise", "Peas"],
+                "steps": ["Boil and drain pasta.", "Mix tuna, peas, and mayo in a bowl.", "Toss with pasta and refrigerate."],
+                "health_notes": "Excellent carb-to-protein ratio for muscle building."
+            },
+            {
+                "type": "Lunch",
+                "name": "Turkey & Avocado Sandwich",
+                "image_url": "https://images.unsplash.com/photo-1626804475297-41607ea0d5eb?q=80&w=400&auto=format&fit=crop",
+                "ingredients": ["4 slices turkey breast", "2 slices whole grain bread", "1/2 avocado", "Swiss cheese"],
+                "steps": ["Assemble sandwich with turkey, cheese, and mashed avocado.", "Grill slightly if desired."],
+                "health_notes": "Healthy fats and fast digesting proteins."
+            }
+        ],
+        "Dinner": [
+            {
+                "type": "Dinner",
+                "name": "Teriyaki Chicken and Rice",
+                "image_url": "https://images.unsplash.com/photo-1532550907401-a500c9a57435?q=80&w=400&auto=format&fit=crop",
+                "ingredients": ["200g chicken thigh", "1.5 cups white jasmine rice", "Teriyaki sauce", "Broccoli"],
+                "steps": ["Pan-fry chicken thighs until cooked through.", "Toss with teriyaki sauce.", "Serve with steamed rice and broccoli."],
+                "health_notes": "Rich in protein and fast carbs to accelerate post-workout recovery."
+            },
+            {
+                "type": "Dinner",
+                "name": "Ribeye Steak & Loaded Potato",
+                "image_url": "https://images.unsplash.com/photo-1543339308-43e59d6b73a6?q=80&w=400&auto=format&fit=crop",
+                "ingredients": ["200g ribeye steak", "1 large russet potato", "Sour cream", "Chives"],
+                "steps": ["Sear steak in a hot skillet to desired doneness.", "Bake potato, slice open, and top with sour cream and chives."],
+                "health_notes": "High protein, zinc, and iron for muscle synthesis."
+            }
+        ]
+    },
+    "general": {
+        "Breakfast": [
+            {
+                "type": "Breakfast",
+                "name": "Fruit Smoothie Bowl",
+                "image_url": "https://images.unsplash.com/photo-1493770348161-369560ae357d?q=80&w=400&auto=format&fit=crop",
+                "ingredients": ["1 cup frozen berries", "1 banana", "1/2 cup almond milk", "Granola"],
+                "steps": ["Blend berries, banana, and almond milk until smooth.", "Pour into a bowl and top with granola."],
+                "health_notes": "Vitamins, antioxidants, and a quick energy boost."
+            },
+            {
+                "type": "Breakfast",
+                "name": "Scrambled Eggs with Veggies",
+                "image_url": "https://images.unsplash.com/photo-1525351484163-7529414344d8?q=80&w=400&auto=format&fit=crop",
+                "ingredients": ["2 eggs", "Bell peppers", "Onions", "1 slice whole wheat toast"],
+                "steps": ["Sauté chopped peppers and onions.", "Whisk in eggs and scramble.", "Serve with toast."],
+                "health_notes": "Balanced protein and micronutrients."
+            }
+        ],
+        "Lunch": [
+            {
+                "type": "Lunch",
+                "name": "Chickpea Salad Wrap",
+                "image_url": "https://images.unsplash.com/photo-1626804475297-41607ea0d5eb?q=80&w=400&auto=format&fit=crop",
+                "ingredients": ["1 cup mashed chickpeas", "1 tbsp light mayo", "Celery", "Whole wheat wrap"],
+                "steps": ["Mix chickpeas, celery, and mayo.", "Spread onto wrap and roll up."],
+                "health_notes": "Plant-based protein, high fiber."
+            },
+            {
+                "type": "Lunch",
+                "name": "Mediterranean Lentil Salad",
+                "image_url": "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=400&auto=format&fit=crop",
+                "ingredients": ["1 cup cooked brown lentils", "Cucumber", "Feta cheese", "Olive oil & lemon"],
+                "steps": ["Toss lentils, chopped cucumber, and feta.", "Drizzle with olive oil and lemon juice."],
+                "health_notes": "Heart-healthy fats and clean proteins."
+            }
+        ],
+        "Dinner": [
+            {
+                "type": "Dinner",
+                "name": "Turkey Meatballs & Spaghetti Squash",
+                "image_url": "https://images.unsplash.com/photo-1532550907401-a500c9a57435?q=80&w=400&auto=format&fit=crop",
+                "ingredients": ["150g turkey meatballs", "1 medium spaghetti squash", "Marinara sauce"],
+                "steps": ["Bake spaghetti squash, scrape out strands.", "Warm meatballs in marinara sauce.", "Serve meatballs and sauce over squash."],
+                "health_notes": "Low carb, high protein alternative to pasta."
+            },
+            {
+                "type": "Dinner",
+                "name": "Lemon Herb Grilled Chicken",
+                "image_url": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?q=80&w=400&auto=format&fit=crop",
+                "ingredients": ["150g chicken breast", "Zucchini noodles", "Pesto sauce", "Cherry tomatoes"],
+                "steps": ["Marinate and grill chicken breast.", "Sauté zucchini noodles with pesto and tomatoes.", "Slice chicken and place on top."],
+                "health_notes": "Light, clean, low sodium dinner."
+            }
+        ]
+    }
+}
+
+
+def get_alternative_meal(goal_str: str, meal_type: str, current_meal_name: str) -> dict:
+    g = goal_str.lower().strip()
+    if "loss" in g or "weight" in g:
+        category = "loss"
+    elif "gain" in g or "muscle" in g or "hypertrophy" in g:
+        category = "gain"
+    else:
+        category = "general"
+
+    mt = meal_type.capitalize().strip()
+    if mt not in ["Breakfast", "Lunch", "Dinner"]:
+        mt = "Breakfast"
+
+    options = ALTERNATIVE_MEALS.get(category, {}).get(mt, [])
+    for opt in options:
+        if opt["name"].lower() != current_meal_name.lower():
+            return opt
+
+    if options:
+        return options[0]
+    return {
+        "type": mt,
+        "name": "Healthy Alternative Meal",
+        "image_url": "https://images.unsplash.com/photo-1493770348161-369560ae357d?q=80&w=400&auto=format&fit=crop",
+        "ingredients": ["Various healthy ingredients"],
+        "steps": ["Prepare and enjoy."],
+        "health_notes": "Balanced nutritious meal."
+    }
+
+
+def perform_swap_logic(nut_plan: dict, day_name: str, meal_type: str, fitness_goal: str) -> dict:
+    days = nut_plan.get("days", [])
+    target_day = None
+    for d in days:
+        if d.get("day", "").lower() == day_name.lower():
+            target_day = d
+            break
+    
+    if not target_day:
+        return nut_plan
+
+    meals = target_day.get("meals", [])
+    target_meal = None
+    for m in meals:
+        if m.get("type", "").lower() == meal_type.lower():
+            target_meal = m
+            break
+
+    if not target_meal:
+        return nut_plan
+
+    current_meal_name = target_meal.get("name", "")
+    new_meal = get_alternative_meal(fitness_goal, meal_type, current_meal_name)
+    target_meal.update(new_meal)
+    return nut_plan
+
+
+from api.schemas import SwapMealRequest
+
+@router.post("/meal-plans/swap-meal")
+async def swap_meal_plan_meal(
+    request: SwapMealRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    if request.goal_id is not None:
+        result = await db.execute(
+            select(UserGoal).where(UserGoal.id == request.goal_id, UserGoal.user_id == current_user.id)
+        )
+        user_goal = result.scalars().first()
+        if not user_goal:
+            raise HTTPException(status_code=404, detail="Meal plan not found")
+        
+        if not user_goal.nutrition_plan:
+            raise HTTPException(status_code=400, detail="Meal plan does not contain a nutrition plan")
+
+        try:
+            nut_plan = json.loads(user_goal.nutrition_plan)
+        except Exception:
+            raise HTTPException(status_code=500, detail="Failed to parse saved nutrition plan")
+
+        updated_plan = perform_swap_logic(nut_plan, request.day, request.meal_type, user_goal.fitness_goal or "General Health")
+        
+        user_goal.nutrition_plan = json.dumps(updated_plan)
+        await db.commit()
+        await db.refresh(user_goal)
+
+        from api.schemas import MealPlanResponse
+        return MealPlanResponse(
+            goal_id=user_goal.id,
+            fitness_goal=user_goal.fitness_goal,
+            nutrition_plan=updated_plan,
+            created_at=user_goal.created_at
+        )
+
+    elif request.nutrition_plan is not None:
+        fitness_goal = request.nutrition_plan.get("fitness_goal", "General Health")
+        updated_plan = perform_swap_logic(request.nutrition_plan, request.day, request.meal_type, fitness_goal)
+        return {
+            "nutrition_plan": updated_plan
+        }
+    else:
+        raise HTTPException(status_code=400, detail="Either goal_id or nutrition_plan must be provided")
+
+
+@router.post("/meal-plans/{goal_id}/activate", response_model=MealPlanResponse)
+async def activate_user_meal_plan(
+    goal_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(select(UserGoal).where(UserGoal.id == goal_id, UserGoal.user_id == current_user.id))
+    user_goal = result.scalars().first()
+    if not user_goal:
+        raise HTTPException(status_code=404, detail="Meal plan not found")
+        
+    user_goal.is_active = True
+    await db.commit()
+    await db.refresh(user_goal)
+    
+    from api.schemas import MealPlanResponse
+    nut_plan = {}
+    if user_goal.nutrition_plan:
+        try:
+            nut_plan = json.loads(user_goal.nutrition_plan)
+        except Exception:
+            pass
+            
+    return MealPlanResponse(
+        goal_id=user_goal.id,
+        fitness_goal=user_goal.fitness_goal,
+        nutrition_plan=nut_plan,
+        created_at=user_goal.created_at
+    )
 
 
 @router.get("/profile", response_model=UserResponse)
