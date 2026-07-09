@@ -72,6 +72,7 @@ class WorkoutLog(Base):
     reps: Mapped[int] = mapped_column(default=0, nullable=False)
     calories: Mapped[int] = mapped_column(default=0, nullable=False)
     duration_minutes: Mapped[int] = mapped_column(default=0, nullable=False)
+    goal_id: Mapped[int | None] = mapped_column(ForeignKey("user_goals.id", ondelete="SET NULL"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 

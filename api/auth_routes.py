@@ -390,6 +390,7 @@ async def log_workout(
         reps=request.reps,
         calories=request.calories,
         duration_minutes=request.duration_minutes,
+        goal_id=request.goal_id,
         created_at=log_time
     )
     db.add(new_log)

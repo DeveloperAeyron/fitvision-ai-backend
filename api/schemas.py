@@ -64,6 +64,7 @@ class WorkoutLogCreate(BaseModel):
     reps: int
     calories: int
     duration_minutes: int
+    goal_id: int | None = None
     created_at: datetime | None = None
 
 

@@ -65,6 +65,7 @@ async def create_db_tables():
 
         try:
             await conn.execute(text("ALTER TABLE workout_logs ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP"))
+            await conn.execute(text("ALTER TABLE workout_logs ADD COLUMN IF NOT EXISTS goal_id INTEGER REFERENCES user_goals(id) ON DELETE SET NULL"))
         except Exception:
             pass
 
