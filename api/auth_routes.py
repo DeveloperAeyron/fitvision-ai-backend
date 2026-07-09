@@ -430,16 +430,16 @@ def generate_workout_and_nutrition_plans(fitness_goal: str, activity_level: str,
         if "loss" in goal or "weight" in goal:
             exercises = [
                 {"name": "Push-Ups", "sets": 4, "reps_or_duration": "20 reps", "type": "Bodyweight"},
-                {"name": "Bodyweight Squats", "sets": 4, "reps_or_duration": "15 reps", "type": "Bodyweight"},
-                {"name": "Plank Hold", "sets": 3, "reps_or_duration": "45 sec", "type": "Bodyweight"}
+                {"name": "Squats", "sets": 4, "reps_or_duration": "15 reps", "type": "Bodyweight"},
+                {"name": "Plank", "sets": 3, "reps_or_duration": "45 sec", "type": "Bodyweight"}
             ]
             workout_name = "HIIT Fat Burner"
             duration = 30
         elif "gain" in goal or "muscle" in goal or "hypertrophy" in goal:
             exercises = [
                 {"name": "Push-Ups", "sets": 4, "reps_or_duration": "20 reps", "type": "Bodyweight"},
-                {"name": "Bodyweight Squats", "sets": 4, "reps_or_duration": "15 reps", "type": "Bodyweight"},
-                {"name": "Plank Hold", "sets": 3, "reps_or_duration": "45 sec", "type": "Bodyweight"}
+                {"name": "Squats", "sets": 4, "reps_or_duration": "15 reps", "type": "Bodyweight"},
+                {"name": "Plank", "sets": 3, "reps_or_duration": "45 sec", "type": "Bodyweight"}
             ]
             workout_name = "Hypertrophy Power"
             duration = 50
