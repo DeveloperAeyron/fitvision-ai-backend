@@ -12,7 +12,7 @@ from api.schemas import TokenData
 
 SECRET_KEY = os.getenv("SECRET_KEY", "fitvision_secret_key_change_me_in_prod")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 365 * 100
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
