@@ -352,33 +352,15 @@ async def get_dashboard(
     goal_res = await db.execute(select(UserGoal).where(UserGoal.user_id == current_user.id, UserGoal.is_active == True))
     active_goal = goal_res.scalars().first()
 
-    # Query this week's workout logs
-    today = datetime.utcnow().date()
-    start_of_week = datetime.combine(today - timedelta(days=today.weekday()), datetime.min.time())
-    end_of_week = start_of_week + timedelta(days=7)
-
-    logs_result = await db.execute(
-        select(WorkoutLog).where(
-            WorkoutLog.user_id == current_user.id,
-            WorkoutLog.created_at >= start_of_week,
-            WorkoutLog.created_at < end_of_week
-        )
-    )
-    logs = logs_result.scalars().all()
-
-    workouts_current = len(logs)
-    reps_current = sum(log.reps for log in logs)
-    calories_current = sum(log.calories for log in logs)
-
     if not active_goal:
         return {
             "username": current_user.full_name or current_user.username,
             "email": current_user.email,
             "completion_percentage": 0.0,
             "goals": {
-                "workouts": {"current": workouts_current, "target": 0, "unit": "workouts"},
-                "reps": {"current": reps_current, "target": 0, "unit": "reps"},
-                "calories": {"current": calories_current, "target": 0, "unit": "kcal"}
+                "workouts": {"current": 0, "target": 0, "unit": "workouts"},
+                "reps": {"current": 0, "target": 0, "unit": "reps"},
+                "calories": {"current": 0, "target": 0, "unit": "kcal"}
             },
             "weekly_progress": [
                 {"day": "Mon", "percentage": 0.0},
@@ -392,6 +374,25 @@ async def get_dashboard(
             "next_workout": None,
             "lastModifiedAt": datetime.utcnow()
         }
+
+    # Query this week's workout logs for the active goal
+    today = datetime.utcnow().date()
+    start_of_week = datetime.combine(today - timedelta(days=today.weekday()), datetime.min.time())
+    end_of_week = start_of_week + timedelta(days=7)
+
+    logs_result = await db.execute(
+        select(WorkoutLog).where(
+            WorkoutLog.user_id == current_user.id,
+            WorkoutLog.goal_id == active_goal.id,
+            WorkoutLog.created_at >= start_of_week,
+            WorkoutLog.created_at < end_of_week
+        )
+    )
+    logs = logs_result.scalars().all()
+
+    workouts_current = len(logs)
+    reps_current = sum(log.reps for log in logs)
+    calories_current = sum(log.calories for log in logs)
 
     target_workouts = active_goal.target_workouts
     target_reps = active_goal.target_reps
@@ -718,7 +719,7 @@ def generate_workout_and_nutrition_plans(fitness_goal: str, activity_level: str,
     return workout_plan, nutrition_plan
 
 
-async def calculate_weekly_progress(user_id: int, db: AsyncSession) -> tuple[int, int, int]:
+async def calculate_weekly_progress(user_id: int, goal_id: int, db: AsyncSession) -> tuple[int, int, int]:
     today = datetime.utcnow().date()
     start_of_week = datetime.combine(today - timedelta(days=today.weekday()), datetime.min.time())
     end_of_week = start_of_week + timedelta(days=7)
@@ -726,6 +727,7 @@ async def calculate_weekly_progress(user_id: int, db: AsyncSession) -> tuple[int
     logs_result = await db.execute(
         select(WorkoutLog).where(
             WorkoutLog.user_id == user_id,
+            WorkoutLog.goal_id == goal_id,
             WorkoutLog.created_at >= start_of_week,
             WorkoutLog.created_at < end_of_week
         )
@@ -843,7 +845,7 @@ async def create_user_goal(
     await db.commit()
     await db.refresh(user_goal)
     
-    workouts_current, reps_current, calories_current = await calculate_weekly_progress(current_user.id, db)
+    workouts_current, reps_current, calories_current = await calculate_weekly_progress(current_user.id, user_goal.id, db)
     return to_goal_response(user_goal, workouts_current, reps_current, calories_current)
 
 
@@ -968,9 +970,11 @@ async def get_user_goals(
     )
     user_goals = goal_res.scalars().all()
     
-
-    workouts_current, reps_current, calories_current = await calculate_weekly_progress(current_user.id, db)
-    return [to_goal_response(g, workouts_current, reps_current, calories_current) for g in user_goals]
+    responses = []
+    for g in user_goals:
+        workouts_current, reps_current, calories_current = await calculate_weekly_progress(current_user.id, g.id, db)
+        responses.append(to_goal_response(g, workouts_current, reps_current, calories_current))
+    return responses
 
 
 @router.post("/goals/{goal_id}/activate", response_model=GoalResponse)
@@ -988,7 +992,7 @@ async def activate_user_goal(
     await db.commit()
     await db.refresh(user_goal)
     
-    workouts_current, reps_current, calories_current = await calculate_weekly_progress(current_user.id, db)
+    workouts_current, reps_current, calories_current = await calculate_weekly_progress(current_user.id, user_goal.id, db)
     return to_goal_response(user_goal, workouts_current, reps_current, calories_current)
 
 
@@ -1013,7 +1017,7 @@ async def generate_meal_plan_for_goal(
     await db.commit()
     await db.refresh(user_goal)
     
-    workouts_current, reps_current, calories_current = await calculate_weekly_progress(current_user.id, db)
+    workouts_current, reps_current, calories_current = await calculate_weekly_progress(current_user.id, user_goal.id, db)
     return to_goal_response(user_goal, workouts_current, reps_current, calories_current)
 
 
