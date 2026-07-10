@@ -345,35 +345,125 @@ async def google_login(request: GoogleLoginRequest, db: AsyncSession = Depends(g
 
 @router.get("/dashboard", response_model=DashboardResponse)
 async def get_dashboard(
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
-    # Returning hardcoded dummy response as requested
+    # Fetch active goal
+    goal_res = await db.execute(select(UserGoal).where(UserGoal.user_id == current_user.id, UserGoal.is_active == True))
+    active_goal = goal_res.scalars().first()
+
+    # Query this week's workout logs
+    today = datetime.utcnow().date()
+    start_of_week = datetime.combine(today - timedelta(days=today.weekday()), datetime.min.time())
+    end_of_week = start_of_week + timedelta(days=7)
+
+    logs_result = await db.execute(
+        select(WorkoutLog).where(
+            WorkoutLog.user_id == current_user.id,
+            WorkoutLog.created_at >= start_of_week,
+            WorkoutLog.created_at < end_of_week
+        )
+    )
+    logs = logs_result.scalars().all()
+
+    workouts_current = len(logs)
+    reps_current = sum(log.reps for log in logs)
+    calories_current = sum(log.calories for log in logs)
+
+    if not active_goal:
+        return {
+            "username": current_user.full_name or current_user.username,
+            "email": current_user.email,
+            "completion_percentage": 0.0,
+            "goals": {
+                "workouts": {"current": workouts_current, "target": 0, "unit": "workouts"},
+                "reps": {"current": reps_current, "target": 0, "unit": "reps"},
+                "calories": {"current": calories_current, "target": 0, "unit": "kcal"}
+            },
+            "weekly_progress": [
+                {"day": "Mon", "percentage": 0.0},
+                {"day": "Tue", "percentage": 0.0},
+                {"day": "Wed", "percentage": 0.0},
+                {"day": "Thu", "percentage": 0.0},
+                {"day": "Fri", "percentage": 0.0},
+                {"day": "Sat", "percentage": 0.0},
+                {"day": "Sun", "percentage": 0.0}
+            ],
+            "next_workout": None,
+            "lastModifiedAt": datetime.utcnow()
+        }
+
+    target_workouts = active_goal.target_workouts
+    target_reps = active_goal.target_reps
+    target_calories = active_goal.target_calories
+
+    w_pct = (workouts_current / target_workouts) if target_workouts > 0 else 0
+    r_pct = (reps_current / target_reps) if target_reps > 0 else 0
+    c_pct = (calories_current / target_calories) if target_calories > 0 else 0
+    
+    completion_percentage = round(((min(w_pct, 1.0) + min(r_pct, 1.0) + min(c_pct, 1.0)) / 3.0) * 100.0, 1)
+
+    # Calculate weekly progress (calories per day / daily target calories)
+    daily_target_calories = target_calories / 7.0 if target_calories > 0 else 2000.0
+    day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    progress_by_day = {day: 0.0 for day in day_names}
+
+    for log in logs:
+        day_idx = log.created_at.weekday()
+        day_str = day_names[day_idx]
+        progress_by_day[day_str] += log.calories
+
+    weekly_progress = []
+    for day in day_names:
+        pct = (progress_by_day[day] / daily_target_calories) * 100.0 if daily_target_calories > 0 else 0.0
+        weekly_progress.append({"day": day, "percentage": min(round(pct, 1), 100.0)})
+
+    # Next workout
+    next_workout = None
+    if active_goal.workout_plan:
+        import json
+        try:
+            w_plan = json.loads(active_goal.workout_plan)
+            # Find the workout for today or next day
+            today_day_str = today.strftime("%A") # "Monday"
+            days_order = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+            today_idx = days_order.index(today_day_str)
+            
+            # Reorder w_plan to start from today
+            ordered_days = days_order[today_idx:] + days_order[:today_idx]
+            
+            for d in ordered_days:
+                workout_for_day = next((w for w in w_plan if w.get("day") == d), None)
+                if workout_for_day:
+                    time_str = "TODAY" if d == today_day_str else d.upper()
+                    if d != today_day_str and days_order.index(d) == (today_idx + 1) % 7:
+                        time_str = "TOMORROW"
+                    
+                    time_val = active_goal.available_time or "7:00 PM"
+                    
+                    next_workout = {
+                        "title": workout_for_day.get("workout_name", "Workout"),
+                        "time": f"{time_str} {time_val}",
+                        "duration": f"{workout_for_day.get('duration_minutes', 45)} min",
+                        "location": "Gym",
+                        "type": "Strength" if "Hypertrophy" in workout_for_day.get("workout_name", "") else "Cardio",
+                        "difficulty": active_goal.activity_level or "Intermediate"
+                    }
+                    break
+        except Exception as e:
+            pass
+
     return {
         "username": current_user.full_name or current_user.username,
         "email": current_user.email,
-        "completion_percentage": 72.0,
+        "completion_percentage": completion_percentage,
         "goals": {
-            "workouts": {"current": 11, "target": 15, "unit": "workouts"},
-            "reps": {"current": 1245, "target": 1800, "unit": "reps"},
-            "calories": {"current": 6250, "target": 8000, "unit": "kcal"}
+            "workouts": {"current": workouts_current, "target": target_workouts, "unit": "workouts"},
+            "reps": {"current": reps_current, "target": target_reps, "unit": "reps"},
+            "calories": {"current": calories_current, "target": target_calories, "unit": "kcal"}
         },
-        "weekly_progress": [
-            {"day": "Mon", "percentage": 20.0},
-            {"day": "Tue", "percentage": 50.0},
-            {"day": "Wed", "percentage": 48.0},
-            {"day": "Thu", "percentage": 30.0},
-            {"day": "Fri", "percentage": 40.0},
-            {"day": "Sat", "percentage": 55.0},
-            {"day": "Sun", "percentage": 38.0}
-        ],
-        "next_workout": {
-            "title": "Full Body Kickstart",
-            "time": "TOMORROW 7:00 PM",
-            "duration": "45 min",
-            "location": "Gym",
-            "type": "Strength",
-            "difficulty": "Intermediate"
-        },
+        "weekly_progress": weekly_progress,
+        "next_workout": next_workout,
         "lastModifiedAt": datetime.utcnow()
     }
 
