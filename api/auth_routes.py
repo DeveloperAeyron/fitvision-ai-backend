@@ -800,6 +800,7 @@ async def create_user_meal(
         goal_id=user_goal.id,
         fitness_goal=user_goal.fitness_goal,
         nutrition_plan=nutrition_plan,
+        is_active=user_goal.is_active,
         created_at=user_goal.created_at
     )
 
@@ -992,6 +993,7 @@ async def get_user_meal_plans(
                 goal_id=g.id,
                 fitness_goal=g.fitness_goal,
                 nutrition_plan=nut_plan,
+                is_active=g.is_active,
                 created_at=g.created_at
             ).model_dump()
         )
