@@ -68,6 +68,21 @@ class WorkoutLogCreate(BaseModel):
     created_at: datetime | None = None
 
 
+class WorkoutLogResponse(BaseModel):
+    id: int
+    user_id: int
+    exercise_name: str
+    reps: int
+    calories: int
+    duration_minutes: int
+    goal_id: int | None = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
 
 class GoalMetric(BaseModel):
     current: int
