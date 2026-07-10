@@ -28,6 +28,7 @@ from api.schemas import (
     GoogleLoginRequest,
     DashboardResponse,
     WorkoutLogCreate,
+    WorkoutLogResponse,
     GoalCreateRequest,
     GoalResponse,
     MealCreateRequest,
@@ -397,6 +398,19 @@ async def log_workout(
     await db.commit()
     await db.refresh(new_log)
     return {"message": "Workout logged successfully", "id": new_log.id}
+
+
+@router.get("/workouts/logs", response_model=list[WorkoutLogResponse])
+async def get_workout_logs(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(WorkoutLog)
+        .where(WorkoutLog.user_id == current_user.id)
+        .order_by(WorkoutLog.created_at.asc(), WorkoutLog.id.asc())
+    )
+    return result.scalars().all()
 
 
 import json
