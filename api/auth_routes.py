@@ -6,7 +6,7 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-from fastapi import APIRouter, Depends, HTTPException, status, Form
+from fastapi import APIRouter, Depends, HTTPException, status, Form, UploadFile, File, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy import delete
@@ -2159,15 +2159,49 @@ async def get_user_me(current_user: User = Depends(get_current_user)):
 
 @router.put("/profile")
 async def update_user_profile(
-    profile_data: dict, # using dict here because I will import UserProfileUpdate later, or I can just use dict for now
+    request: Request,
+    email: str | None = Form(None),
+    gender: str | None = Form(None),
+    date_of_birth: str | None = Form(None),
+    allow_notifications: bool | None = Form(None),
+    app_blocker: bool | None = Form(None),
+    profile_image: UploadFile | None = File(None),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    from api.schemas import UserProfileUpdate, UserResponse
-    # Validate profile_data via UserProfileUpdate
-    update_schema = UserProfileUpdate(**profile_data)
-    update_data = update_schema.model_dump(exclude_unset=True)
+    from api.schemas import UserResponse
+    import uuid
+    import shutil
+    import os
     
+    update_data = {}
+    if email is not None: update_data["email"] = email
+    if gender is not None: update_data["gender"] = gender
+    if date_of_birth is not None:
+        try:
+            update_data["date_of_birth"] = datetime.strptime(date_of_birth, "%Y-%m-%d").date()
+        except ValueError:
+            pass
+    if allow_notifications is not None: update_data["allow_notifications"] = allow_notifications
+    if app_blocker is not None: update_data["app_blocker"] = app_blocker
+    
+    if profile_image:
+        os.makedirs("uploads", exist_ok=True)
+        ext = os.path.splitext(profile_image.filename)[1]
+        if not ext:
+            ext = ".jpg"
+        filename = f"{uuid.uuid4()}{ext}"
+        filepath = os.path.join("uploads", filename)
+        
+        with open(filepath, "wb") as buffer:
+            shutil.copyfileobj(profile_image.file, buffer)
+            
+        base_url = str(request.base_url)
+        if base_url.endswith("/"):
+            base_url = base_url[:-1]
+        public_url = f"{base_url}/uploads/{filename}"
+        update_data["profile_image"] = public_url
+
     if "email" in update_data and update_data["email"] != current_user.email:
         # Check if new email is already taken
         email_result = await db.execute(select(User).where(User.email == update_data["email"]))
