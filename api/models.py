@@ -1,5 +1,7 @@
 from datetime import datetime, date
-from sqlalchemy import String, DateTime, Date, ForeignKey, Integer, Float, Boolean, Text
+from sqlalchemy import String, DateTime, Date, ForeignKey, Integer, Float, Boolean, Text, UniqueConstraint
+import uuid
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 from api.database import Base
 
@@ -66,20 +68,43 @@ class UserGoal(Base):
 
 class WorkoutLog(Base):
     __tablename__ = "workout_logs"
+    __table_args__ = (
+        UniqueConstraint("user_id", "goal_id", "exercise_key", "workout_date", name="ix_workout_logs_aggregate"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    goal_id: Mapped[int | None] = mapped_column(ForeignKey("user_goals.id", ondelete="SET NULL"), nullable=True)
     exercise_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    exercise_key: Mapped[str] = mapped_column(String(100), nullable=False, default="")
+    workout_date: Mapped[date] = mapped_column(Date, default=datetime.utcnow().date, nullable=False)
+    
     reps: Mapped[int] = mapped_column(default=0, nullable=False)
     calories: Mapped[int] = mapped_column(default=0, nullable=False)
     duration_minutes: Mapped[int] = mapped_column(default=0, nullable=False)
-    goal_id: Mapped[int | None] = mapped_column(ForeignKey("user_goals.id", ondelete="SET NULL"), nullable=True)
+    duration_seconds: Mapped[int] = mapped_column(default=0, nullable=False)
+    
+    recommended_sets: Mapped[int] = mapped_column(default=0, nullable=False)
+    recommended_reps_per_set: Mapped[int] = mapped_column(default=0, nullable=False)
+    recommended_duration_seconds: Mapped[int] = mapped_column(default=0, nullable=False)
+    is_completed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
     @property
     def lastModifiedAt(self) -> datetime:
         return self.updated_at
+
+class WorkoutLogEvent(Base):
+    __tablename__ = "workout_log_events"
+
+    session_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    workout_log_id: Mapped[int] = mapped_column(ForeignKey("workout_logs.id", ondelete="CASCADE"), nullable=False)
+    reps_delta: Mapped[int] = mapped_column(default=0, nullable=False)
+    duration_seconds_delta: Mapped[int] = mapped_column(default=0, nullable=False)
+    calories_delta: Mapped[int] = mapped_column(default=0, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
 
 class Exercise(Base):

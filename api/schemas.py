@@ -1,4 +1,5 @@
 from datetime import datetime, date
+import uuid
 from pydantic import BaseModel, EmailStr, Field
 
 class UserCreate(BaseModel):
@@ -76,6 +77,48 @@ class WorkoutLogResponse(BaseModel):
     calories: int
     duration_minutes: int
     goal_id: int | None = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class WorkoutProgressRequest(BaseModel):
+    session_id: uuid.UUID
+    goal_id: int | None = None
+    exercise_name: str
+    workout_date: date
+
+    reps_delta: int = 0
+    duration_seconds_delta: int = 0
+    calories_delta: int = 0
+
+    recommended_sets: int = 0
+    recommended_reps_per_set: int = 0
+    recommended_duration_seconds: int = 0
+
+
+class WorkoutProgressResponse(BaseModel):
+    id: int
+    goal_id: int | None = None
+    exercise_name: str
+    workout_date: date
+
+    reps: int
+    duration_seconds: int
+    duration_minutes: int
+    calories: int
+
+    recommended_sets: int
+    recommended_reps_per_set: int
+    recommended_reps_total: int
+    recommended_duration_seconds: int
+
+    remaining_reps: int
+    remaining_duration_seconds: int
+    is_completed: bool
+
     created_at: datetime
     updated_at: datetime
 

@@ -17,7 +17,7 @@ import httpx
 import secrets
 
 from api.database import get_db
-from api.models import User, PWDResetOTP, UserGoal, WorkoutLog
+from api.models import User, PWDResetOTP, UserGoal, WorkoutLog, WorkoutLogEvent
 from api.schemas import (
     UserCreate,
     UserResponse,
@@ -33,6 +33,8 @@ from api.schemas import (
     GoalResponse,
     MealCreateRequest,
     MealPlanResponse,
+    WorkoutProgressRequest,
+    WorkoutProgressResponse,
 )
 from api.auth import (
     hash_password,
@@ -384,13 +386,13 @@ async def get_dashboard(
         select(WorkoutLog).where(
             WorkoutLog.user_id == current_user.id,
             WorkoutLog.goal_id == active_goal.id,
-            WorkoutLog.created_at >= start_of_week,
-            WorkoutLog.created_at < end_of_week
+            WorkoutLog.workout_date >= start_of_week.date(),
+            WorkoutLog.workout_date < end_of_week.date()
         )
     )
     logs = logs_result.scalars().all()
 
-    workouts_current = len(logs)
+    workouts_current = sum(1 for log in logs if log.is_completed)
     reps_current = sum(log.reps for log in logs)
     calories_current = sum(log.calories for log in logs)
 
@@ -410,7 +412,7 @@ async def get_dashboard(
     progress_by_day = {day: 0.0 for day in day_names}
 
     for log in logs:
-        day_idx = log.created_at.weekday()
+        day_idx = log.workout_date.weekday()
         day_str = day_names[day_idx]
         progress_by_day[day_str] += log.calories
 
@@ -502,6 +504,195 @@ async def get_workout_logs(
         .order_by(WorkoutLog.created_at.asc(), WorkoutLog.id.asc())
     )
     return result.scalars().all()
+
+
+import math
+from typing import Optional
+
+@router.post("/workouts/progress", response_model=WorkoutProgressResponse, status_code=status.HTTP_200_OK)
+async def log_workout_progress(
+    request: WorkoutProgressRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    # 1. Validate goal ownership if goal_id is provided
+    if request.goal_id:
+        goal_result = await db.execute(select(UserGoal).where(UserGoal.id == request.goal_id, UserGoal.user_id == current_user.id))
+        if not goal_result.scalar_one_or_none():
+            raise HTTPException(status_code=403, detail="Not authorized to log progress for this goal")
+
+    # 2. Normalize exercise key
+    normalized_key = " ".join(request.exercise_name.casefold().split())
+
+    # 3. Deltas and recommendations cannot be negative
+    if request.reps_delta < 0 or request.duration_seconds_delta < 0 or request.calories_delta < 0:
+        raise HTTPException(status_code=400, detail="Deltas cannot be negative")
+    if request.recommended_sets < 0 or request.recommended_reps_per_set < 0 or request.recommended_duration_seconds < 0:
+        raise HTTPException(status_code=400, detail="Recommendations cannot be negative")
+
+    # 4. Require exactly one recommendation mode
+    has_rep_mode = request.recommended_sets > 0 and request.recommended_reps_per_set > 0
+    has_time_mode = request.recommended_duration_seconds > 0
+    if has_rep_mode and has_time_mode:
+        raise HTTPException(status_code=400, detail="Cannot mix rep and time recommendations")
+    if not has_rep_mode and not has_time_mode:
+        # User instruction: "Permit zero progress so an explicitly finished zero-progress session can be recorded..." 
+        # But wait, instruction says: "Require exactly one recommendation mode: Rep mode (sets, reps positive; dur zero) or Timed mode (dur positive; reps zero)"
+        # Does the "zero progress session" mean deltas are zero, or recommendations are zero? "Permit zero progress" usually refers to deltas.
+        pass
+
+    # Find or create aggregate
+    # Using a transaction for the entire operation
+    async with db.begin_nested():
+        # Check if session_id already exists in events
+        event_result = await db.execute(select(WorkoutLogEvent).where(WorkoutLogEvent.session_id == request.session_id))
+        existing_event = event_result.scalar_one_or_none()
+
+        aggregate_result = await db.execute(
+            select(WorkoutLog)
+            .where(
+                WorkoutLog.user_id == current_user.id,
+                WorkoutLog.goal_id == request.goal_id,
+                WorkoutLog.exercise_key == normalized_key,
+                WorkoutLog.workout_date == request.workout_date
+            )
+            .with_for_update()
+        )
+        aggregate = aggregate_result.scalar_one_or_none()
+
+        if existing_event:
+            # Idempotent replay: return existing aggregate as is
+            pass
+        else:
+            if not aggregate:
+                aggregate = WorkoutLog(
+                    user_id=current_user.id,
+                    goal_id=request.goal_id,
+                    exercise_name=request.exercise_name,
+                    exercise_key=normalized_key,
+                    workout_date=request.workout_date,
+                    reps=0,
+                    calories=0,
+                    duration_minutes=0,
+                    duration_seconds=0,
+                    recommended_sets=request.recommended_sets,
+                    recommended_reps_per_set=request.recommended_reps_per_set,
+                    recommended_duration_seconds=request.recommended_duration_seconds,
+                    is_completed=False
+                )
+                db.add(aggregate)
+                await db.flush() # So we get aggregate.id
+            else:
+                # If aggregate exists, reject changed recommendation values
+                if (aggregate.recommended_sets != request.recommended_sets or
+                    aggregate.recommended_reps_per_set != request.recommended_reps_per_set or
+                    aggregate.recommended_duration_seconds != request.recommended_duration_seconds):
+                    raise HTTPException(status_code=409, detail="Conflicting recommendation values for existing aggregate")
+                
+                # Reject genuinely new sessions if already completed
+                if aggregate.is_completed:
+                    raise HTTPException(status_code=409, detail="Exercise already completed for this date")
+
+            # Insert event
+            new_event = WorkoutLogEvent(
+                session_id=request.session_id,
+                workout_log_id=aggregate.id,
+                reps_delta=request.reps_delta,
+                duration_seconds_delta=request.duration_seconds_delta,
+                calories_delta=request.calories_delta
+            )
+            db.add(new_event)
+
+            # Update aggregate
+            aggregate.reps += request.reps_delta
+            aggregate.duration_seconds += request.duration_seconds_delta
+            aggregate.duration_minutes = math.ceil(aggregate.duration_seconds / 60)
+            aggregate.calories += request.calories_delta
+            aggregate.updated_at = datetime.utcnow()
+
+            # Recalculate completion
+            rec_reps_total = aggregate.recommended_sets * aggregate.recommended_reps_per_set
+            if rec_reps_total > 0 and aggregate.reps >= rec_reps_total:
+                aggregate.is_completed = True
+            elif aggregate.recommended_duration_seconds > 0 and aggregate.duration_seconds >= aggregate.recommended_duration_seconds:
+                aggregate.is_completed = True
+
+    await db.commit()
+    await db.refresh(aggregate)
+
+    # Calculate remaining values with minimum of zero
+    rec_reps_total = aggregate.recommended_sets * aggregate.recommended_reps_per_set
+    remaining_reps = max(0, rec_reps_total - aggregate.reps)
+    remaining_duration = max(0, aggregate.recommended_duration_seconds - aggregate.duration_seconds)
+
+    return WorkoutProgressResponse(
+        id=aggregate.id,
+        goal_id=aggregate.goal_id,
+        exercise_name=aggregate.exercise_name,
+        workout_date=aggregate.workout_date,
+        reps=aggregate.reps,
+        duration_seconds=aggregate.duration_seconds,
+        duration_minutes=aggregate.duration_minutes,
+        calories=aggregate.calories,
+        recommended_sets=aggregate.recommended_sets,
+        recommended_reps_per_set=aggregate.recommended_reps_per_set,
+        recommended_reps_total=rec_reps_total,
+        recommended_duration_seconds=aggregate.recommended_duration_seconds,
+        remaining_reps=remaining_reps,
+        remaining_duration_seconds=remaining_duration,
+        is_completed=aggregate.is_completed,
+        created_at=aggregate.created_at,
+        updated_at=aggregate.updated_at
+    )
+
+
+@router.get("/goals/{goal_id}/workout-progress", response_model=list[WorkoutProgressResponse])
+async def get_workout_progress(
+    goal_id: int,
+    workout_date: str | None = None,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    goal_result = await db.execute(select(UserGoal).where(UserGoal.id == goal_id, UserGoal.user_id == current_user.id))
+    if not goal_result.scalar_one_or_none():
+        raise HTTPException(status_code=403, detail="Not authorized to access this goal")
+
+    query = select(WorkoutLog).where(
+        WorkoutLog.user_id == current_user.id,
+        WorkoutLog.goal_id == goal_id
+    )
+    if workout_date:
+        query = query.where(WorkoutLog.workout_date == datetime.strptime(workout_date, "%Y-%m-%d").date())
+    
+    query = query.order_by(WorkoutLog.created_at.asc())
+    result = await db.execute(query)
+    aggregates = result.scalars().all()
+    
+    response_list = []
+    for agg in aggregates:
+        rec_reps_total = agg.recommended_sets * agg.recommended_reps_per_set
+        remaining_reps = max(0, rec_reps_total - agg.reps)
+        remaining_duration = max(0, agg.recommended_duration_seconds - agg.duration_seconds)
+        response_list.append(WorkoutProgressResponse(
+            id=agg.id,
+            goal_id=agg.goal_id,
+            exercise_name=agg.exercise_name,
+            workout_date=agg.workout_date,
+            reps=agg.reps,
+            duration_seconds=agg.duration_seconds,
+            duration_minutes=agg.duration_minutes,
+            calories=agg.calories,
+            recommended_sets=agg.recommended_sets,
+            recommended_reps_per_set=agg.recommended_reps_per_set,
+            recommended_reps_total=rec_reps_total,
+            recommended_duration_seconds=agg.recommended_duration_seconds,
+            remaining_reps=remaining_reps,
+            remaining_duration_seconds=remaining_duration,
+            is_completed=agg.is_completed,
+            created_at=agg.created_at,
+            updated_at=agg.updated_at
+        ))
+    return response_list
 
 
 import json
@@ -728,13 +919,13 @@ async def calculate_weekly_progress(user_id: int, goal_id: int, db: AsyncSession
         select(WorkoutLog).where(
             WorkoutLog.user_id == user_id,
             WorkoutLog.goal_id == goal_id,
-            WorkoutLog.created_at >= start_of_week,
-            WorkoutLog.created_at < end_of_week
+            WorkoutLog.workout_date >= start_of_week.date(),
+            WorkoutLog.workout_date < end_of_week.date()
         )
     )
     logs = logs_result.scalars().all()
 
-    actual_workouts = len(logs)
+    actual_workouts = sum(1 for log in logs if log.is_completed)
     actual_reps = sum(log.reps for log in logs)
     actual_calories = sum(log.calories for log in logs)
     return actual_workouts, actual_reps, actual_calories
