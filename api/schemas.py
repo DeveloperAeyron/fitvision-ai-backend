@@ -126,6 +126,7 @@ class ExerciseBase(BaseModel):
     exercise_type: str
     location_type: str | None = "both"
     video_url: str | None = None
+    video_instruction: str | None = "https://example.com/default_video.mp4"
     muscles_worked_pct: dict[str, float] | None = None
     suggested_workouts: list[str] | None = None
     instructions: list[str] | None = None
@@ -147,6 +148,19 @@ class ExerciseResponse(ExerciseBase):
 
     class Config:
         from_attributes = True
+
+
+class EquipmentResponse(BaseModel):
+    id: int
+    title: str
+    primary_muscle: str
+    exercise_type: str
+    best_for: str
+    video_instruction: str | None = "https://example.com/default_video.mp4"
+    muscles_worked_pct: dict[str, float] | None = None
+    suggested_workouts: list[str] | None = None
+    instructions: list[str] | None = None
+    safety_tips: list[str] | None = None
 
 
 class GoalCreateRequest(BaseModel):

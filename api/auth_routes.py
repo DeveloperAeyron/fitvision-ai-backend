@@ -535,25 +535,25 @@ def generate_workout_and_nutrition_plans(fitness_goal: str, activity_level: str,
     for day in days:
         if "loss" in goal or "weight" in goal:
             exercises = [
-                {"name": "Push-Ups", "sets": 4, "reps_or_duration": "20 reps", "type": "Bodyweight"},
-                {"name": "Squats", "sets": 4, "reps_or_duration": "15 reps", "type": "Bodyweight"},
-                {"name": "Plank", "sets": 3, "reps_or_duration": "45 sec", "type": "Bodyweight"}
+                {"name": "Push-Ups", "sets": 4, "reps_or_duration": "20 reps", "type": "Bodyweight", "video_instruction": "https://example.com/pushups.mp4"},
+                {"name": "Squats", "sets": 4, "reps_or_duration": "15 reps", "type": "Bodyweight", "video_instruction": "https://example.com/squats.mp4"},
+                {"name": "Plank", "sets": 3, "reps_or_duration": "45 sec", "type": "Bodyweight", "video_instruction": "https://example.com/plank.mp4"}
             ]
             workout_name = "HIIT Fat Burner"
             duration = 30
         elif "gain" in goal or "muscle" in goal or "hypertrophy" in goal:
             exercises = [
-                {"name": "Push-Ups", "sets": 4, "reps_or_duration": "20 reps", "type": "Bodyweight"},
-                {"name": "Squats", "sets": 4, "reps_or_duration": "15 reps", "type": "Bodyweight"},
-                {"name": "Plank", "sets": 3, "reps_or_duration": "45 sec", "type": "Bodyweight"}
+                {"name": "Push-Ups", "sets": 4, "reps_or_duration": "20 reps", "type": "Bodyweight", "video_instruction": "https://example.com/pushups.mp4"},
+                {"name": "Squats", "sets": 4, "reps_or_duration": "15 reps", "type": "Bodyweight", "video_instruction": "https://example.com/squats.mp4"},
+                {"name": "Plank", "sets": 3, "reps_or_duration": "45 sec", "type": "Bodyweight", "video_instruction": "https://example.com/plank.mp4"}
             ]
             workout_name = "Hypertrophy Power"
             duration = 50
         else:
             exercises = [
-                {"name": "Jumping Jacks", "sets": 3, "reps_or_duration": "30 sec", "type": "Cardio"},
-                {"name": "Glute Bridges", "sets": 3, "reps_or_duration": "15 reps", "type": "Bodyweight"},
-                {"name": "Bird Dog", "sets": 3, "reps_or_duration": "12 reps", "type": "Mobility"}
+                {"name": "Jumping Jacks", "sets": 3, "reps_or_duration": "30 sec", "type": "Cardio", "video_instruction": "https://example.com/default_video.mp4"},
+                {"name": "Glute Bridges", "sets": 3, "reps_or_duration": "15 reps", "type": "Bodyweight", "video_instruction": "https://example.com/default_video.mp4"},
+                {"name": "Bird Dog", "sets": 3, "reps_or_duration": "12 reps", "type": "Mobility", "video_instruction": "https://example.com/default_video.mp4"}
             ]
             workout_name = "General Health & Tone"
             duration = 40
@@ -2262,3 +2262,70 @@ async def contact_us(
     # Dummy implementation for Contact Us
     logger.info(f"Contact Us message from {request.email}: {request.description}")
     return {"message": "Thank you for contacting us. Your request has been received."}
+
+@router.get('/equipments', response_model=list[dict])
+async def get_equipments(current_user: User = Depends(get_current_user)):
+    from api.schemas import EquipmentResponse
+    equipments = [
+        EquipmentResponse(
+            id=1,
+            title='Cable Chest Fly Machine',
+            primary_muscle='Chest',
+            exercise_type='Isolation',
+            best_for='Upper Body',
+            video_instruction='https://example.com/cable_chest_fly.mp4',
+            muscles_worked_pct={'Chest (Pectoralis Major)': 100, 'Front Deltoids': 60, 'Biceps (Stabilization)': 40, 'Core': 30},
+            suggested_workouts=['Cable Chest Fly', 'High to low Cable Fly'],
+            instructions=[
+                'Adjust seat height so handles align mid chest.',
+                'Grip handles with a slight bend in your elbows.',
+                'Squeeze your chest as you bring handles together.',
+                'Slowly return to the starting position with control.'
+            ],
+            safety_tips=[
+                'Do not lock elbows during movement.',
+                'Use a controlled tempo to avoid shoulder strain.',
+                'Start with lighter weight to master form.'
+            ]
+        ),
+        EquipmentResponse(
+            id=2,
+            title='Dumbbells',
+            primary_muscle='Multiple',
+            exercise_type='Free Weight',
+            best_for='Full Body',
+            video_instruction='https://example.com/dumbbells.mp4',
+            muscles_worked_pct={'Primary Target': 100, 'Stabilizers': 50},
+            suggested_workouts=['Dumbbell Bench Press', 'Dumbbell Bicep Curl'],
+            instructions=[
+                'Select appropriate weight.',
+                'Maintain proper posture and neutral spine.',
+                'Control the weight through the full range of motion.'
+            ],
+            safety_tips=[
+                'Do not drop the weights from a height.',
+                'Ensure a firm grip before lifting.'
+            ]
+        ),
+        EquipmentResponse(
+            id=3,
+            title='Barbell',
+            primary_muscle='Multiple',
+            exercise_type='Compound',
+            best_for='Full Body Strength',
+            video_instruction='https://example.com/barbell.mp4',
+            muscles_worked_pct={'Primary Target': 100, 'Core': 60},
+            suggested_workouts=['Barbell Squats', 'Barbell Deadlift'],
+            instructions=[
+                'Position hands evenly on the knurling.',
+                'Engage core before initiating lift.',
+                'Keep the bar path strictly vertical.'
+            ],
+            safety_tips=[
+                'Use collars to secure plates.',
+                'Use a spotter for heavy lifts.'
+            ]
+        )
+    ]
+    return [eq.model_dump() for eq in equipments]
+
