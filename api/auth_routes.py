@@ -304,7 +304,7 @@ async def google_login(request: GoogleLoginRequest, db: AsyncSession = Depends(g
             )
 
     # 2. Verify audience matches configured Google Client ID
-    google_client_id = os.getenv("GOOGLE_CLIENT_ID", "272845957801-lel0bj139oa9tic61f419du4fgpspc7c.apps.googleusercontent.com")
+    google_client_id = os.getenv("GOOGLE_CLIENT_ID", "622634184380-1bstt5af3mai3124ne0llm1b42qfrha4.apps.googleusercontent.com")
     aud = payload.get("aud")
     if google_client_id and aud != google_client_id:
         raise HTTPException(
