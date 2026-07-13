@@ -1,3 +1,9 @@
+"""
+Migration script for workout logs.
+IMPORTANT: Run this migration script BEFORE deploying the new application code.
+SQLAlchemy's create_all() does not alter existing tables to add new columns or constraints.
+"""
+
 import asyncio
 import os
 import sys
@@ -33,14 +39,21 @@ async def run_migration():
         await conn.execute(text("""
             UPDATE workout_logs 
             SET 
-                exercise_key = REGEXP_REPLACE(LOWER(exercise_name), '\s+', ' ', 'g'),
-                workout_date = DATE(created_at),
-                duration_seconds = duration_minutes * 60,
-                recommended_sets = 0,
-                recommended_reps_per_set = 0,
-                recommended_duration_seconds = 0,
-                is_completed = true
-            WHERE exercise_key IS NULL OR workout_date IS NULL;
+                exercise_key = COALESCE(NULLIF(exercise_key, ''), BTRIM(REGEXP_REPLACE(LOWER(exercise_name), '\\s+', ' ', 'g'))),
+                workout_date = COALESCE(workout_date, DATE(created_at)),
+                duration_seconds = COALESCE(duration_seconds, duration_minutes * 60),
+                recommended_sets = COALESCE(recommended_sets, 0),
+                recommended_reps_per_set = COALESCE(recommended_reps_per_set, 0),
+                recommended_duration_seconds = COALESCE(recommended_duration_seconds, 0),
+                is_completed = COALESCE(is_completed, true)
+            WHERE exercise_key IS NULL 
+               OR exercise_key = '' 
+               OR workout_date IS NULL
+               OR duration_seconds IS NULL
+               OR recommended_sets IS NULL
+               OR recommended_reps_per_set IS NULL
+               OR recommended_duration_seconds IS NULL
+               OR is_completed IS NULL;
         """))
 
         print("3. Merging duplicates...")
@@ -100,14 +113,21 @@ async def run_migration():
             await conn.execute(text(f"ALTER TABLE workout_logs ALTER COLUMN {col} SET NOT NULL;"))
             
         print("6. Adding unique constraint if not exists...")
-        try:
-            await conn.execute(text("""
-                ALTER TABLE workout_logs 
-                ADD CONSTRAINT ix_workout_logs_aggregate 
-                UNIQUE (user_id, goal_id, exercise_key, workout_date);
-            """))
-        except Exception as e:
-            print("Constraint may already exist:", e)
+        await conn.execute(text("""
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 
+                    FROM pg_constraint 
+                    WHERE conname = 'ix_workout_logs_aggregate'
+                ) THEN
+                    ALTER TABLE workout_logs 
+                    ADD CONSTRAINT ix_workout_logs_aggregate 
+                    UNIQUE (user_id, goal_id, exercise_key, workout_date);
+                END IF;
+            END
+            $$;
+        """))
 
         print("7. Creating workout_log_events table...")
         await conn.execute(text("""

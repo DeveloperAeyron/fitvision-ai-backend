@@ -478,14 +478,19 @@ async def log_workout(
     db: AsyncSession = Depends(get_db)
 ):
     log_time = request.created_at if request.created_at else datetime.utcnow()
+    normalized_key = " ".join(request.exercise_name.casefold().split())
     new_log = WorkoutLog(
         user_id=current_user.id,
         exercise_name=request.exercise_name,
+        exercise_key=normalized_key,
+        workout_date=log_time.date(),
         reps=request.reps,
         calories=request.calories,
         duration_minutes=request.duration_minutes,
+        duration_seconds=request.duration_minutes * 60,
         goal_id=request.goal_id,
-        created_at=log_time
+        created_at=log_time,
+        is_completed=True
     )
     db.add(new_log)
     await db.commit()
@@ -515,11 +520,12 @@ async def log_workout_progress(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    # 1. Validate goal ownership if goal_id is provided
-    if request.goal_id:
-        goal_result = await db.execute(select(UserGoal).where(UserGoal.id == request.goal_id, UserGoal.user_id == current_user.id))
-        if not goal_result.scalar_one_or_none():
-            raise HTTPException(status_code=403, detail="Not authorized to log progress for this goal")
+    from sqlalchemy.dialects.postgresql import insert
+
+    # 1. Validate goal ownership
+    goal_result = await db.execute(select(UserGoal).where(UserGoal.id == request.goal_id, UserGoal.user_id == current_user.id))
+    if not goal_result.scalar_one_or_none():
+        raise HTTPException(status_code=403, detail="Not authorized to log progress for this goal")
 
     # 2. Normalize exercise key
     normalized_key = " ".join(request.exercise_name.casefold().split())
@@ -533,13 +539,15 @@ async def log_workout_progress(
     # 4. Require exactly one recommendation mode
     has_rep_mode = request.recommended_sets > 0 and request.recommended_reps_per_set > 0
     has_time_mode = request.recommended_duration_seconds > 0
+    
     if has_rep_mode and has_time_mode:
         raise HTTPException(status_code=400, detail="Cannot mix rep and time recommendations")
     if not has_rep_mode and not has_time_mode:
-        # User instruction: "Permit zero progress so an explicitly finished zero-progress session can be recorded..." 
-        # But wait, instruction says: "Require exactly one recommendation mode: Rep mode (sets, reps positive; dur zero) or Timed mode (dur positive; reps zero)"
-        # Does the "zero progress session" mean deltas are zero, or recommendations are zero? "Permit zero progress" usually refers to deltas.
-        pass
+        raise HTTPException(status_code=400, detail="Must provide either rep or time recommendations")
+    if has_rep_mode and request.recommended_duration_seconds > 0:
+        raise HTTPException(status_code=400, detail="Rep mode cannot have duration targets")
+    if has_time_mode and (request.recommended_sets > 0 or request.recommended_reps_per_set > 0):
+        raise HTTPException(status_code=400, detail="Time mode cannot have rep targets")
 
     # Find or create aggregate
     # Using a transaction for the entire operation
@@ -548,50 +556,54 @@ async def log_workout_progress(
         event_result = await db.execute(select(WorkoutLogEvent).where(WorkoutLogEvent.session_id == request.session_id))
         existing_event = event_result.scalar_one_or_none()
 
-        aggregate_result = await db.execute(
-            select(WorkoutLog)
-            .where(
-                WorkoutLog.user_id == current_user.id,
-                WorkoutLog.goal_id == request.goal_id,
-                WorkoutLog.exercise_key == normalized_key,
-                WorkoutLog.workout_date == request.workout_date
-            )
-            .with_for_update()
-        )
-        aggregate = aggregate_result.scalar_one_or_none()
-
         if existing_event:
-            # Idempotent replay: return existing aggregate as is
-            pass
+            # Idempotent replay: load aggregate and return
+            agg_res = await db.execute(select(WorkoutLog).where(WorkoutLog.id == existing_event.workout_log_id))
+            aggregate = agg_res.scalar_one_or_none()
+            if not aggregate or aggregate.user_id != current_user.id:
+                raise HTTPException(status_code=403, detail="Not authorized")
         else:
-            if not aggregate:
-                aggregate = WorkoutLog(
-                    user_id=current_user.id,
-                    goal_id=request.goal_id,
-                    exercise_name=request.exercise_name,
-                    exercise_key=normalized_key,
-                    workout_date=request.workout_date,
-                    reps=0,
-                    calories=0,
-                    duration_minutes=0,
-                    duration_seconds=0,
-                    recommended_sets=request.recommended_sets,
-                    recommended_reps_per_set=request.recommended_reps_per_set,
-                    recommended_duration_seconds=request.recommended_duration_seconds,
-                    is_completed=False
+            # We must use INSERT ... ON CONFLICT DO NOTHING to ensure concurrency safety
+            stmt = insert(WorkoutLog).values(
+                user_id=current_user.id,
+                goal_id=request.goal_id,
+                exercise_name=request.exercise_name,
+                exercise_key=normalized_key,
+                workout_date=request.workout_date,
+                reps=0,
+                calories=0,
+                duration_minutes=0,
+                duration_seconds=0,
+                recommended_sets=request.recommended_sets,
+                recommended_reps_per_set=request.recommended_reps_per_set,
+                recommended_duration_seconds=request.recommended_duration_seconds,
+                is_completed=False
+            ).on_conflict_do_nothing(
+                index_elements=['user_id', 'goal_id', 'exercise_key', 'workout_date']
+            )
+            await db.execute(stmt)
+
+            aggregate_result = await db.execute(
+                select(WorkoutLog)
+                .where(
+                    WorkoutLog.user_id == current_user.id,
+                    WorkoutLog.goal_id == request.goal_id,
+                    WorkoutLog.exercise_key == normalized_key,
+                    WorkoutLog.workout_date == request.workout_date
                 )
-                db.add(aggregate)
-                await db.flush() # So we get aggregate.id
-            else:
-                # If aggregate exists, reject changed recommendation values
-                if (aggregate.recommended_sets != request.recommended_sets or
-                    aggregate.recommended_reps_per_set != request.recommended_reps_per_set or
-                    aggregate.recommended_duration_seconds != request.recommended_duration_seconds):
-                    raise HTTPException(status_code=409, detail="Conflicting recommendation values for existing aggregate")
-                
-                # Reject genuinely new sessions if already completed
-                if aggregate.is_completed:
-                    raise HTTPException(status_code=409, detail="Exercise already completed for this date")
+                .with_for_update()
+            )
+            aggregate = aggregate_result.scalar_one()
+
+            # If aggregate existed before, reject changed recommendation values
+            if (aggregate.recommended_sets != request.recommended_sets or
+                aggregate.recommended_reps_per_set != request.recommended_reps_per_set or
+                aggregate.recommended_duration_seconds != request.recommended_duration_seconds):
+                raise HTTPException(status_code=409, detail="Conflicting recommendation values for existing aggregate")
+            
+            # Reject genuinely new sessions if already completed
+            if aggregate.is_completed:
+                raise HTTPException(status_code=409, detail="Exercise already completed for this date")
 
             # Insert event
             new_event = WorkoutLogEvent(
@@ -649,7 +661,7 @@ async def log_workout_progress(
 @router.get("/goals/{goal_id}/workout-progress", response_model=list[WorkoutProgressResponse])
 async def get_workout_progress(
     goal_id: int,
-    workout_date: str | None = None,
+    workout_date: date | None = None,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -662,7 +674,7 @@ async def get_workout_progress(
         WorkoutLog.goal_id == goal_id
     )
     if workout_date:
-        query = query.where(WorkoutLog.workout_date == datetime.strptime(workout_date, "%Y-%m-%d").date())
+        query = query.where(WorkoutLog.workout_date == workout_date)
     
     query = query.order_by(WorkoutLog.created_at.asc())
     result = await db.execute(query)

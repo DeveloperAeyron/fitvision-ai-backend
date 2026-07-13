@@ -38,18 +38,18 @@ async def get_dashboard_data(
     target_calories = active_goal.target_calories if active_goal else 8000
 
     # 2. Fetch workout logs for the last 7 days
-    seven_days_ago = datetime.utcnow() - timedelta(days=7)
+    seven_days_ago = datetime.utcnow().date() - timedelta(days=7)
     logs_result = await db.execute(
         select(WorkoutLog)
         .where(
             WorkoutLog.user_id == current_user.id,
-            WorkoutLog.created_at >= seven_days_ago
+            WorkoutLog.workout_date >= seven_days_ago
         )
     )
     recent_logs = logs_result.scalars().all()
 
     # 3. Calculate current progress
-    current_workouts = len(recent_logs)
+    current_workouts = sum(1 for log in recent_logs if log.is_completed)
     current_reps = sum(log.reps for log in recent_logs)
     current_calories = sum(log.calories for log in recent_logs)
     
@@ -73,7 +73,7 @@ async def get_dashboard_data(
 
     # Sum calories per day
     for log in recent_logs:
-        log_date = log.created_at.date()
+        log_date = log.workout_date
         if log_date in weekly_progress_dict:
             weekly_progress_dict[log_date]["calories"] += log.calories
 

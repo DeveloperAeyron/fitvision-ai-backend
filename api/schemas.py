@@ -86,7 +86,7 @@ class WorkoutLogResponse(BaseModel):
 
 class WorkoutProgressRequest(BaseModel):
     session_id: uuid.UUID
-    goal_id: int | None = None
+    goal_id: int
     exercise_name: str
     workout_date: date
 

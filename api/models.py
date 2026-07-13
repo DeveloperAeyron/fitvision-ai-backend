@@ -77,7 +77,7 @@ class WorkoutLog(Base):
     goal_id: Mapped[int | None] = mapped_column(ForeignKey("user_goals.id", ondelete="SET NULL"), nullable=True)
     exercise_name: Mapped[str] = mapped_column(String(100), nullable=False)
     exercise_key: Mapped[str] = mapped_column(String(100), nullable=False, default="")
-    workout_date: Mapped[date] = mapped_column(Date, default=datetime.utcnow().date, nullable=False)
+    workout_date: Mapped[date] = mapped_column(Date, default=date.today, nullable=False)
     
     reps: Mapped[int] = mapped_column(default=0, nullable=False)
     calories: Mapped[int] = mapped_column(default=0, nullable=False)
