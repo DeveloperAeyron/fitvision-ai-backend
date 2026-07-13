@@ -552,49 +552,62 @@ async def log_workout_progress(
     # Find or create aggregate
     # Using a transaction for the entire operation
     async with db.begin_nested():
-        # Check if session_id already exists in events
-        event_result = await db.execute(select(WorkoutLogEvent).where(WorkoutLogEvent.session_id == request.session_id))
-        existing_event = event_result.scalar_one_or_none()
+        # We must use INSERT ... ON CONFLICT DO NOTHING to ensure concurrency safety
+        stmt = insert(WorkoutLog).values(
+            user_id=current_user.id,
+            goal_id=request.goal_id,
+            exercise_name=request.exercise_name,
+            exercise_key=normalized_key,
+            workout_date=request.workout_date,
+            reps=0,
+            calories=0,
+            duration_minutes=0,
+            duration_seconds=0,
+            recommended_sets=request.recommended_sets,
+            recommended_reps_per_set=request.recommended_reps_per_set,
+            recommended_duration_seconds=request.recommended_duration_seconds,
+            is_completed=False
+        ).on_conflict_do_nothing(
+            index_elements=['user_id', 'goal_id', 'exercise_key', 'workout_date']
+        )
+        await db.execute(stmt)
 
-        if existing_event:
-            # Idempotent replay: load aggregate and return
+        aggregate_result = await db.execute(
+            select(WorkoutLog)
+            .where(
+                WorkoutLog.user_id == current_user.id,
+                WorkoutLog.goal_id == request.goal_id,
+                WorkoutLog.exercise_key == normalized_key,
+                WorkoutLog.workout_date == request.workout_date
+            )
+            .with_for_update()
+        )
+        aggregate = aggregate_result.scalar_one()
+
+        # Attempt to insert event using ON CONFLICT DO NOTHING
+        event_stmt = insert(WorkoutLogEvent).values(
+            session_id=request.session_id,
+            workout_log_id=aggregate.id,
+            reps_delta=request.reps_delta,
+            duration_seconds_delta=request.duration_seconds_delta,
+            calories_delta=request.calories_delta
+        ).on_conflict_do_nothing(
+            index_elements=['session_id']
+        ).returning(WorkoutLogEvent.session_id)
+        
+        event_insert_result = await db.execute(event_stmt)
+        inserted_session_id = event_insert_result.scalar_one_or_none()
+
+        if not inserted_session_id:
+            # Idempotent replay: load existing event and return its aggregate
+            event_result = await db.execute(select(WorkoutLogEvent).where(WorkoutLogEvent.session_id == request.session_id))
+            existing_event = event_result.scalar_one()
+            
             agg_res = await db.execute(select(WorkoutLog).where(WorkoutLog.id == existing_event.workout_log_id))
             aggregate = agg_res.scalar_one_or_none()
             if not aggregate or aggregate.user_id != current_user.id:
                 raise HTTPException(status_code=403, detail="Not authorized")
         else:
-            # We must use INSERT ... ON CONFLICT DO NOTHING to ensure concurrency safety
-            stmt = insert(WorkoutLog).values(
-                user_id=current_user.id,
-                goal_id=request.goal_id,
-                exercise_name=request.exercise_name,
-                exercise_key=normalized_key,
-                workout_date=request.workout_date,
-                reps=0,
-                calories=0,
-                duration_minutes=0,
-                duration_seconds=0,
-                recommended_sets=request.recommended_sets,
-                recommended_reps_per_set=request.recommended_reps_per_set,
-                recommended_duration_seconds=request.recommended_duration_seconds,
-                is_completed=False
-            ).on_conflict_do_nothing(
-                index_elements=['user_id', 'goal_id', 'exercise_key', 'workout_date']
-            )
-            await db.execute(stmt)
-
-            aggregate_result = await db.execute(
-                select(WorkoutLog)
-                .where(
-                    WorkoutLog.user_id == current_user.id,
-                    WorkoutLog.goal_id == request.goal_id,
-                    WorkoutLog.exercise_key == normalized_key,
-                    WorkoutLog.workout_date == request.workout_date
-                )
-                .with_for_update()
-            )
-            aggregate = aggregate_result.scalar_one()
-
             # If aggregate existed before, reject changed recommendation values
             if (aggregate.recommended_sets != request.recommended_sets or
                 aggregate.recommended_reps_per_set != request.recommended_reps_per_set or
@@ -604,16 +617,6 @@ async def log_workout_progress(
             # Reject genuinely new sessions if already completed
             if aggregate.is_completed:
                 raise HTTPException(status_code=409, detail="Exercise already completed for this date")
-
-            # Insert event
-            new_event = WorkoutLogEvent(
-                session_id=request.session_id,
-                workout_log_id=aggregate.id,
-                reps_delta=request.reps_delta,
-                duration_seconds_delta=request.duration_seconds_delta,
-                calories_delta=request.calories_delta
-            )
-            db.add(new_event)
 
             # Update aggregate
             aggregate.reps += request.reps_delta
