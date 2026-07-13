@@ -159,7 +159,7 @@ class DashboardResponse(BaseModel):
     completion_percentage: float
     goals: DashboardGoals
     weekly_progress: list[WeeklyProgressDay]
-    next_workout: NextWorkoutInfo
+    next_workout: NextWorkoutInfo | None = None
     lastModifiedAt: datetime | None = None
 
 
