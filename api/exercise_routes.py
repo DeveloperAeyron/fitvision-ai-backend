@@ -43,6 +43,7 @@ def to_exercise_response(model: Exercise) -> ExerciseResponse:
         exercise_type=model.exercise_type,
         video_url=model.video_url,
         video_instruction=model.video_url or "https://example.com/default_video.mp4",
+        image_url=model.image_url or "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=400&auto=format&fit=crop",
         muscles_worked_pct=muscles,
         suggested_workouts=workouts,
         instructions=instructions_list,

@@ -170,6 +170,7 @@ class ExerciseBase(BaseModel):
     location_type: str | None = "both"
     video_url: str | None = None
     video_instruction: str | None = "https://example.com/default_video.mp4"
+    image_url: str | None = "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=400&auto=format&fit=crop"
     muscles_worked_pct: dict[str, float] | None = None
     suggested_workouts: list[str] | None = None
     instructions: list[str] | None = None

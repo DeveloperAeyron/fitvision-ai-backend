@@ -741,27 +741,27 @@ def generate_workout_and_nutrition_plans(fitness_goal: str, activity_level: str,
     for day in days:
         if "loss" in goal or "weight" in goal:
             exercises = [
-                {"name": "Push-Ups", "sets": 4, "reps_or_duration": "20 reps", "type": "Bodyweight", "video_instruction": "https://example.com/pushups.mp4"},
-                {"name": "Squats", "sets": 4, "reps_or_duration": "15 reps", "type": "Bodyweight", "video_instruction": "https://example.com/squats.mp4"},
-                {"name": "Plank", "sets": 3, "reps_or_duration": "45 sec", "type": "Bodyweight", "video_instruction": "https://example.com/plank.mp4"},
-                {"name": "Situps", "sets": 3, "reps_or_duration": "20 reps", "type": "Bodyweight", "video_instruction": "https://example.com/situps.mp4"}
+                {"name": "Push-Ups", "sets": 4, "reps_or_duration": "20 reps", "type": "Bodyweight", "image_url": "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=400&auto=format&fit=crop", "video_instruction": "https://example.com/pushups.mp4"},
+                {"name": "Squats", "sets": 4, "reps_or_duration": "15 reps", "type": "Bodyweight", "image_url": "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=400&auto=format&fit=crop", "video_instruction": "https://example.com/squats.mp4"},
+                {"name": "Plank", "sets": 3, "reps_or_duration": "45 sec", "type": "Bodyweight", "image_url": "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=400&auto=format&fit=crop", "video_instruction": "https://example.com/plank.mp4"},
+                {"name": "Situps", "sets": 3, "reps_or_duration": "20 reps", "type": "Bodyweight", "image_url": "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=400&auto=format&fit=crop", "video_instruction": "https://example.com/situps.mp4"}
             ]
             workout_name = "HIIT Fat Burner"
             duration = 35
         elif "gain" in goal or "muscle" in goal or "hypertrophy" in goal:
             exercises = [
-                {"name": "Push-Ups", "sets": 4, "reps_or_duration": "20 reps", "type": "Bodyweight", "video_instruction": "https://example.com/pushups.mp4"},
-                {"name": "Squats", "sets": 4, "reps_or_duration": "15 reps", "type": "Bodyweight", "video_instruction": "https://example.com/squats.mp4"},
-                {"name": "Plank", "sets": 3, "reps_or_duration": "45 sec", "type": "Bodyweight", "video_instruction": "https://example.com/plank.mp4"},
-                {"name": "Situps", "sets": 3, "reps_or_duration": "20 reps", "type": "Bodyweight", "video_instruction": "https://example.com/situps.mp4"}
+                {"name": "Push-Ups", "sets": 4, "reps_or_duration": "20 reps", "type": "Bodyweight", "image_url": "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=400&auto=format&fit=crop", "video_instruction": "https://example.com/pushups.mp4"},
+                {"name": "Squats", "sets": 4, "reps_or_duration": "15 reps", "type": "Bodyweight", "image_url": "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=400&auto=format&fit=crop", "video_instruction": "https://example.com/squats.mp4"},
+                {"name": "Plank", "sets": 3, "reps_or_duration": "45 sec", "type": "Bodyweight", "image_url": "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=400&auto=format&fit=crop", "video_instruction": "https://example.com/plank.mp4"},
+                {"name": "Situps", "sets": 3, "reps_or_duration": "20 reps", "type": "Bodyweight", "image_url": "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=400&auto=format&fit=crop", "video_instruction": "https://example.com/situps.mp4"}
             ]
             workout_name = "Hypertrophy Power"
             duration = 50
         else:
             exercises = [
-                {"name": "Jumping Jacks", "sets": 3, "reps_or_duration": "30 sec", "type": "Cardio", "video_instruction": "https://example.com/default_video.mp4"},
-                {"name": "Glute Bridges", "sets": 3, "reps_or_duration": "15 reps", "type": "Bodyweight", "video_instruction": "https://example.com/default_video.mp4"},
-                {"name": "Bird Dog", "sets": 3, "reps_or_duration": "12 reps", "type": "Mobility", "video_instruction": "https://example.com/default_video.mp4"}
+                {"name": "Jumping Jacks", "sets": 3, "reps_or_duration": "30 sec", "type": "Cardio", "image_url": "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=400&auto=format&fit=crop", "video_instruction": "https://example.com/default_video.mp4"},
+                {"name": "Glute Bridges", "sets": 3, "reps_or_duration": "15 reps", "type": "Bodyweight", "image_url": "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=400&auto=format&fit=crop", "video_instruction": "https://example.com/default_video.mp4"},
+                {"name": "Bird Dog", "sets": 3, "reps_or_duration": "12 reps", "type": "Mobility", "image_url": "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=400&auto=format&fit=crop", "video_instruction": "https://example.com/default_video.mp4"}
             ]
             workout_name = "General Health & Tone"
             duration = 40

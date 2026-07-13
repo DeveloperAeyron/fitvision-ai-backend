@@ -116,6 +116,7 @@ class Exercise(Base):
     exercise_type: Mapped[str] = mapped_column(String(50), nullable=False)
     location_type: Mapped[str | None] = mapped_column(String(50), default="both", nullable=True)
     video_url: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    image_url: Mapped[str | None] = mapped_column(String(200), nullable=True)
     muscles_worked_pct: Mapped[str | None] = mapped_column(String(500), nullable=True)
     suggested_workouts: Mapped[str | None] = mapped_column(String(500), nullable=True)
     instructions: Mapped[str | None] = mapped_column(String(2000), nullable=True)
