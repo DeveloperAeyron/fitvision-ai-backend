@@ -712,7 +712,7 @@ async def get_workout_progress(
 
 import json
 
-def generate_workout_and_nutrition_plans(fitness_goal: str, activity_level: str, available_days: list[str] = None):
+async def generate_workout_and_nutrition_plans(fitness_goal: str, activity_level: str, db: AsyncSession, available_days: list[str] = None):
     goal = fitness_goal.lower().strip()
     level = activity_level.lower().strip()
     
@@ -737,35 +737,44 @@ def generate_workout_and_nutrition_plans(fitness_goal: str, activity_level: str,
         else:
             days = ["Tuesday", "Thursday", "Saturday"]
             
+    from sqlalchemy import select
+    from api.models import Exercise
+    import random
+    
+    result = await db.execute(select(Exercise))
+    all_exercises = result.scalars().all()
+    
+    # Simple split of exercises
+    if "loss" in goal or "weight" in goal:
+        workout_name = "HIIT Fat Burner"
+        duration = 35
+        # Prefer bodyweight/cardio if available, else take any
+        pool = [e for e in all_exercises if e.equipment_required in ["None", "Bodyweight", "Cardio"]] or all_exercises
+    elif "gain" in goal or "muscle" in goal or "hypertrophy" in goal:
+        workout_name = "Hypertrophy Power"
+        duration = 50
+        # Prefer weights
+        pool = [e for e in all_exercises if e.equipment_required not in ["None", "Bodyweight"]] or all_exercises
+    else:
+        workout_name = "General Health & Tone"
+        duration = 40
+        pool = all_exercises
+        
     workout_plan = []
     for day in days:
-        if "loss" in goal or "weight" in goal:
-            exercises = [
-                {"name": "Push-Ups", "sets": 4, "reps_or_duration": "20 reps", "type": "Bodyweight", "image_url": "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=400&auto=format&fit=crop", "video_instruction": "https://example.com/pushups.mp4"},
-                {"name": "Squats", "sets": 4, "reps_or_duration": "15 reps", "type": "Bodyweight", "image_url": "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=400&auto=format&fit=crop", "video_instruction": "https://example.com/squats.mp4"},
-                {"name": "Plank", "sets": 3, "reps_or_duration": "45 sec", "type": "Bodyweight", "image_url": "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=400&auto=format&fit=crop", "video_instruction": "https://example.com/plank.mp4"},
-                {"name": "Situps", "sets": 3, "reps_or_duration": "20 reps", "type": "Bodyweight", "image_url": "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=400&auto=format&fit=crop", "video_instruction": "https://example.com/situps.mp4"}
-            ]
-            workout_name = "HIIT Fat Burner"
-            duration = 35
-        elif "gain" in goal or "muscle" in goal or "hypertrophy" in goal:
-            exercises = [
-                {"name": "Push-Ups", "sets": 4, "reps_or_duration": "20 reps", "type": "Bodyweight", "image_url": "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=400&auto=format&fit=crop", "video_instruction": "https://example.com/pushups.mp4"},
-                {"name": "Squats", "sets": 4, "reps_or_duration": "15 reps", "type": "Bodyweight", "image_url": "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=400&auto=format&fit=crop", "video_instruction": "https://example.com/squats.mp4"},
-                {"name": "Plank", "sets": 3, "reps_or_duration": "45 sec", "type": "Bodyweight", "image_url": "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=400&auto=format&fit=crop", "video_instruction": "https://example.com/plank.mp4"},
-                {"name": "Situps", "sets": 3, "reps_or_duration": "20 reps", "type": "Bodyweight", "image_url": "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=400&auto=format&fit=crop", "video_instruction": "https://example.com/situps.mp4"}
-            ]
-            workout_name = "Hypertrophy Power"
-            duration = 50
-        else:
-            exercises = [
-                {"name": "Jumping Jacks", "sets": 3, "reps_or_duration": "30 sec", "type": "Cardio", "image_url": "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=400&auto=format&fit=crop", "video_instruction": "https://example.com/default_video.mp4"},
-                {"name": "Glute Bridges", "sets": 3, "reps_or_duration": "15 reps", "type": "Bodyweight", "image_url": "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=400&auto=format&fit=crop", "video_instruction": "https://example.com/default_video.mp4"},
-                {"name": "Bird Dog", "sets": 3, "reps_or_duration": "12 reps", "type": "Mobility", "image_url": "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=400&auto=format&fit=crop", "video_instruction": "https://example.com/default_video.mp4"}
-            ]
-            workout_name = "General Health & Tone"
-            duration = 40
-
+        # Pick 4 random exercises for the day
+        daily_pool = random.sample(pool, min(4, len(pool))) if pool else []
+        exercises = []
+        for e in daily_pool:
+            exercises.append({
+                "name": e.title,
+                "sets": 4 if "gain" in goal else 3,
+                "reps_or_duration": "15 reps" if "gain" in goal else "45 sec",
+                "type": e.exercise_type,
+                "image_url": e.image_url or "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=400&auto=format&fit=crop",
+                "video_instruction": e.video_url or "https://example.com/default_video.mp4"
+            })
+            
         workout_plan.append({
             "day": day,
             "workout_name": workout_name,
@@ -2456,20 +2465,38 @@ async def get_last_modified(
     return {"last_modified": latest.isoformat() if latest else None}
 
 
-from pydantic import BaseModel
-class ContactUsRequest(BaseModel):
-    email: str
-    description: str
-    file_url: str | None = None
-
 @router.post("/contact")
 async def contact_us(
-    request: ContactUsRequest,
+    request: Request,
+    email: str = Form(...),
+    description: str = Form(...),
+    file: UploadFile | None = File(None),
     current_user: User = Depends(get_current_user)
 ):
-    # Dummy implementation for Contact Us
-    logger.info(f"Contact Us message from {request.email}: {request.description}")
-    return {"message": "Thank you for contacting us. Your request has been received."}
+    import os
+    import uuid
+    import shutil
+    
+    public_url = None
+    if file:
+        os.makedirs("uploads", exist_ok=True)
+        ext = os.path.splitext(file.filename)[1]
+        if not ext:
+            ext = ".jpg"
+        filename = f"{uuid.uuid4()}{ext}"
+        filepath = os.path.join("uploads", filename)
+        
+        with open(filepath, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+            
+        base_url = str(request.base_url)
+        if base_url.endswith("/"):
+            base_url = base_url[:-1]
+        public_url = f"{base_url}/uploads/{filename}"
+
+    # Log the message and the uploaded file URL
+    logger.info(f"Contact Us message from {email}: {description} | Attached File: {public_url}")
+    return {"message": "Thank you for contacting us. Your request has been received.", "file_url": public_url}
 
 @router.get('/equipments', response_model=list[dict])
 async def get_equipments(current_user: User = Depends(get_current_user)):
