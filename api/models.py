@@ -114,6 +114,8 @@ class Exercise(Base):
     title: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
     primary_muscle: Mapped[str] = mapped_column(String(50), nullable=False)
     exercise_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    difficulty_level: Mapped[str] = mapped_column(String(50), default="Beginner", nullable=False)
+    equipment_required: Mapped[str] = mapped_column(String(100), default="None", nullable=False)
     location_type: Mapped[str | None] = mapped_column(String(50), default="both", nullable=True)
     video_url: Mapped[str | None] = mapped_column(String(200), nullable=True)
     image_url: Mapped[str | None] = mapped_column(String(200), nullable=True)

@@ -167,6 +167,8 @@ class ExerciseBase(BaseModel):
     title: str
     primary_muscle: str
     exercise_type: str
+    difficulty_level: str = "Beginner"
+    equipment_required: str = "None"
     location_type: str | None = "both"
     video_url: str | None = None
     video_instruction: str | None = "https://example.com/default_video.mp4"
