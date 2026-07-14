@@ -777,134 +777,134 @@ def generate_workout_and_nutrition_plans(fitness_goal: str, activity_level: str,
     meal_days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
     if "loss" in goal or "weight" in goal:
         cal = 1600 if "sedentary" in level else (1800 if "light" in level else 2000)
-        daily_totals = {"calories": cal, "protein_g": 135, "carbs_g": 165, "fats_g": 55, "fiber_g": 30}
+        daily_totals = {"calories": cal, "protein": 135, "carbs": 165, "fats": 55, "fiber": 30}
         meals = [
             {
-                "type": "Breakfast",
+                "type": "Breakfast", "time": "8:00 AM",
                 "name": "Egg White Omelet with Spinach",
                 "image_url": "https://images.unsplash.com/photo-1525351484163-7529414344d8?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["3 egg whites", "1 cup spinach", "1 slice whole wheat toast", "Olive oil spray"],
                 "steps": ["Spray pan with olive oil.", "Sauté spinach until wilted.", "Pour in egg whites and cook until set.", "Serve with toast."],
                 "health_notes": "High protein, low calorie. Spinach provides excellent iron.",
                 "calories": 350,
-                "protein_g": 30,
-                "carbs_g": 25,
-                "fats_g": 10,
-                "fiber_g": 5
+                "protein": 30,
+                "carbs": 25,
+                "fats": 10,
+                "fiber": 5
             },
             {
-                "type": "Lunch",
+                "type": "Lunch", "time": "1:00 PM",
                 "name": "Grilled Chicken Salad",
                 "image_url": "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["150g chicken breast", "Mixed greens", "Cherry tomatoes", "Light vinaigrette"],
                 "steps": ["Grill chicken breast until cooked through.", "Chop greens and tomatoes.", "Toss together with vinaigrette."],
                 "health_notes": "Lean protein and high volume veggies keep you full.",
                 "calories": 550,
-                "protein_g": 45,
-                "carbs_g": 30,
-                "fats_g": 15,
-                "fiber_g": 8
+                "protein": 45,
+                "carbs": 30,
+                "fats": 15,
+                "fiber": 8
             },
             {
-                "type": "Dinner",
+                "type": "Dinner", "time": "7:00 PM",
                 "name": "Baked White Fish & Quinoa",
                 "image_url": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["150g white fish", "1/2 cup cooked quinoa", "Steamed broccoli"],
                 "steps": ["Bake fish at 400F for 15 mins.", "Steam broccoli.", "Serve over warm quinoa."],
                 "health_notes": "Light easily digestible protein for the evening.",
                 "calories": 700,
-                "protein_g": 60,
-                "carbs_g": 110,
-                "fats_g": 30,
-                "fiber_g": 17
+                "protein": 60,
+                "carbs": 110,
+                "fats": 30,
+                "fiber": 17
             }
         ]
     elif "gain" in goal or "muscle" in goal or "hypertrophy" in goal:
         cal = 2400 if "sedentary" in level else (2700 if "light" in level else 3000)
-        daily_totals = {"calories": cal, "protein_g": 160, "carbs_g": 350, "fats_g": 80, "fiber_g": 35}
+        daily_totals = {"calories": cal, "protein": 160, "carbs": 350, "fats": 80, "fiber": 35}
         meals = [
             {
-                "type": "Breakfast",
+                "type": "Breakfast", "time": "8:00 AM",
                 "name": "Protein Oatmeal",
                 "image_url": "https://images.unsplash.com/photo-1517673132405-a56a62b18caf?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["1 cup oats", "2 scoops whey protein", "1 tbsp peanut butter", "1 banana"],
                 "steps": ["Cook oats with water or milk.", "Stir in protein powder while warm.", "Top with sliced banana and peanut butter."],
                 "health_notes": "Dense calories for muscle building and energy.",
                 "calories": 700,
-                "protein_g": 45,
-                "carbs_g": 80,
-                "fats_g": 20,
-                "fiber_g": 10
+                "protein": 45,
+                "carbs": 80,
+                "fats": 20,
+                "fiber": 10
             },
             {
-                "type": "Lunch",
+                "type": "Lunch", "time": "1:00 PM",
                 "name": "Beef & Rice Bowl",
                 "image_url": "https://images.unsplash.com/photo-1543339308-43e59d6b73a6?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["200g lean beef mince", "1.5 cups jasmine rice", "Green beans", "Soy sauce"],
                 "steps": ["Brown beef in a skillet.", "Steam rice and beans.", "Combine and drizzle with soy sauce."],
                 "health_notes": "High carbs to replenish glycogen post-workout.",
                 "calories": 900,
-                "protein_g": 55,
-                "carbs_g": 130,
-                "fats_g": 25,
-                "fiber_g": 10
+                "protein": 55,
+                "carbs": 130,
+                "fats": 25,
+                "fiber": 10
             },
             {
-                "type": "Dinner",
+                "type": "Dinner", "time": "7:00 PM",
                 "name": "Grilled Salmon & Sweet Potato",
                 "image_url": "https://images.unsplash.com/photo-1467003909585-2f8a72700288?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["200g salmon filet", "1 large sweet potato", "Roasted asparagus"],
                 "steps": ["Grill salmon for 10 mins.", "Bake sweet potato until soft.", "Roast asparagus with a pinch of salt."],
                 "health_notes": "Rich in omega-3s for joint health and recovery.",
                 "calories": 800,
-                "protein_g": 60,
-                "carbs_g": 140,
-                "fats_g": 35,
-                "fiber_g": 15
+                "protein": 60,
+                "carbs": 140,
+                "fats": 35,
+                "fiber": 15
             }
         ]
     else:
         cal = 1800 if "sedentary" in level else (2100 if "light" in level else 2400)
-        daily_totals = {"calories": cal, "protein_g": 120, "carbs_g": 260, "fats_g": 60, "fiber_g": 28}
+        daily_totals = {"calories": cal, "protein": 120, "carbs": 260, "fats": 60, "fiber": 28}
         meals = [
             {
-                "type": "Breakfast",
+                "type": "Breakfast", "time": "8:00 AM",
                 "name": "Greek Yogurt Bowl",
                 "image_url": "https://images.unsplash.com/photo-1493770348161-369560ae357d?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["1 cup Greek yogurt", "1 tbsp honey", "Chia seeds", "Mixed berries"],
                 "steps": ["Scoop yogurt into a bowl.", "Top with berries and seeds.", "Drizzle with honey."],
                 "health_notes": "Probiotics for gut health.",
                 "calories": 400,
-                "protein_g": 25,
-                "carbs_g": 50,
-                "fats_g": 10,
-                "fiber_g": 8
+                "protein": 25,
+                "carbs": 50,
+                "fats": 10,
+                "fiber": 8
             },
             {
-                "type": "Lunch",
+                "type": "Lunch", "time": "1:00 PM",
                 "name": "Turkey Breast Wrap",
                 "image_url": "https://images.unsplash.com/photo-1626804475297-41607ea0d5eb?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["Whole wheat tortilla", "Sliced turkey breast", "Avocado", "Lettuce and tomato"],
                 "steps": ["Lay tortilla flat.", "Layer turkey, avocado, and veggies.", "Roll tightly and slice in half."],
                 "health_notes": "Balanced macronutrients for sustained midday energy.",
                 "calories": 600,
-                "protein_g": 40,
-                "carbs_g": 80,
-                "fats_g": 20,
-                "fiber_g": 10
+                "protein": 40,
+                "carbs": 80,
+                "fats": 20,
+                "fiber": 10
             },
             {
-                "type": "Dinner",
+                "type": "Dinner", "time": "7:00 PM",
                 "name": "Chicken & Mediterranean Veggies",
                 "image_url": "https://images.unsplash.com/photo-1532550907401-a500c9a57435?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["150g chicken breast", "Zucchini", "Bell peppers", "Olive oil"],
                 "steps": ["Chop veggies and toss in olive oil.", "Roast alongside chicken at 400F for 25 mins."],
                 "health_notes": "Rich in vitamins and antioxidants.",
                 "calories": 800,
-                "protein_g": 55,
-                "carbs_g": 130,
-                "fats_g": 30,
-                "fiber_g": 10
+                "protein": 55,
+                "carbs": 130,
+                "fats": 30,
+                "fiber": 10
             }
         ]
         
@@ -920,7 +920,7 @@ def generate_workout_and_nutrition_plans(fitness_goal: str, activity_level: str,
             day_meals.append(m_copy)
         nutrition_plan["days"].append({
             "day": day,
-            "actual_totals": {"calories": 0, "protein_g": 0, "carbs_g": 0, "fats_g": 0, "fiber_g": 0},
+            "actual_totals": {"calories": 0, "protein": 0, "carbs": 0, "fats": 0, "fiber": 0},
             "meals": day_meals
         })
         
@@ -1306,726 +1306,726 @@ ALTERNATIVE_MEALS = {
     "loss": {
         "Breakfast": [
             {
-                "type": "Breakfast",
+                "type": "Breakfast", "time": "8:00 AM",
                 "name": "Avocado Toast with Poached Egg",
                 "image_url": "https://images.unsplash.com/photo-1525351484163-7529414344d8?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["1 slice whole wheat bread", "1/2 avocado", "1 poached egg", "Salt and pepper"],
                 "steps": ["Toast the bread.", "Mash avocado and spread on toast.", "Top with poached egg.", "Season to taste."],
                 "health_notes": "Healthy fats from avocado and high-quality protein from egg.",
                 "calories": 300,
-                "protein_g": 12,
-                "carbs_g": 20,
-                "fats_g": 18,
-                "fiber_g": 6
+                "protein": 12,
+                "carbs": 20,
+                "fats": 18,
+                "fiber": 6
             },
             {
-                "type": "Breakfast",
+                "type": "Breakfast", "time": "8:00 AM",
                 "name": "Chia Seed Pudding",
                 "image_url": "https://images.unsplash.com/photo-1517673132405-a56a62b18caf?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["3 tbsp chia seeds", "1 cup almond milk", "1 tsp honey", "Mixed berries"],
                 "steps": ["Mix chia seeds, almond milk, and honey in a jar.", "Refrigerate overnight.", "Top with fresh berries before serving."],
                 "health_notes": "Rich in fiber and omega-3 fatty acids.",
                 "calories": 250,
-                "protein_g": 6,
-                "carbs_g": 35,
-                "fats_g": 9,
-                "fiber_g": 11
+                "protein": 6,
+                "carbs": 35,
+                "fats": 9,
+                "fiber": 11
             },
             {
-                "type": "Breakfast",
+                "type": "Breakfast", "time": "8:00 AM",
                 "name": "Berry Protein Smoothie",
                 "image_url": "https://images.unsplash.com/photo-1553530666-ba11a7da3888?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["1 cup mixed berries", "1 scoop vanilla protein powder", "1 cup almond milk", "1 tbsp chia seeds"],
                 "steps": ["Blend all ingredients until smooth.", "Pour into a glass and serve chilled."],
                 "health_notes": "Antioxidant rich berries combined with recovery whey protein.",
                 "calories": 280,
-                "protein_g": 25,
-                "carbs_g": 30,
-                "fats_g": 5,
-                "fiber_g": 8
+                "protein": 25,
+                "carbs": 30,
+                "fats": 5,
+                "fiber": 8
             },
             {
-                "type": "Breakfast",
+                "type": "Breakfast", "time": "8:00 AM",
                 "name": "Spinach & Mushroom Omelet",
                 "image_url": "https://images.unsplash.com/photo-1525351484163-7529414344d8?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["3 egg whites", "1 whole egg", "1/2 cup spinach", "1/4 cup sliced mushrooms", "1 slice whole grain toast"],
                 "steps": ["Sauté spinach and mushrooms in a pan.", "Whisk eggs and pour into pan.", "Cook until solid, fold, and serve with toast."],
                 "health_notes": "Very low calorie density and extremely high satiety.",
                 "calories": 240,
-                "protein_g": 20,
-                "carbs_g": 6,
-                "fats_g": 16,
-                "fiber_g": 2
+                "protein": 20,
+                "carbs": 6,
+                "fats": 16,
+                "fiber": 2
             },
             {
-                "type": "Breakfast",
+                "type": "Breakfast", "time": "8:00 AM",
                 "name": "Greek Yogurt Parfait",
                 "image_url": "https://images.unsplash.com/photo-1488477181946-6428a0291777?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["1 cup low fat Greek yogurt", "1/2 cup strawberries", "2 tbsp low sugar granola", "1 tsp stevia or honey"],
                 "steps": ["Layer Greek yogurt, strawberries, and granola in a glass.", "Drizzle with honey and serve."],
                 "health_notes": "Probiotic-rich breakfast with muscle-sparing protein content.",
                 "calories": 220,
-                "protein_g": 18,
-                "carbs_g": 25,
-                "fats_g": 4,
-                "fiber_g": 3
+                "protein": 18,
+                "carbs": 25,
+                "fats": 4,
+                "fiber": 3
             },
             {
-                "type": "Breakfast",
+                "type": "Breakfast", "time": "8:00 AM",
                 "name": "Smoked Salmon Scramble",
                 "image_url": "https://images.unsplash.com/photo-1525351484163-7529414344d8?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["3 eggs", "50g smoked salmon", "Dill and chives", "1/2 cup cucumber slices"],
                 "steps": ["Whisk eggs and cook in a pan on medium-low.", "Stir in smoked salmon and herbs just before egg sets.", "Serve with cucumber slices."],
                 "health_notes": "High omega-3 profile, ideal for hormone health during fat loss.",
                 "calories": 290,
-                "protein_g": 26,
-                "carbs_g": 2,
-                "fats_g": 20,
-                "fiber_g": 0
+                "protein": 26,
+                "carbs": 2,
+                "fats": 20,
+                "fiber": 0
             }
         ],
         "Lunch": [
             {
-                "type": "Lunch",
+                "type": "Lunch", "time": "1:00 PM",
                 "name": "Turkey and Hummus Wrap",
                 "image_url": "https://images.unsplash.com/photo-1626804475297-41607ea0d5eb?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["1 whole wheat tortilla", "100g sliced turkey breast", "2 tbsp hummus", "Spinach and cucumber"],
                 "steps": ["Spread hummus on the tortilla.", "Layer turkey and fresh vegetables.", "Roll tightly and serve."],
                 "health_notes": "High protein, low fat, and packed with vitamins.",
                 "calories": 400,
-                "protein_g": 35,
-                "carbs_g": 40,
-                "fats_g": 12,
-                "fiber_g": 7
+                "protein": 35,
+                "carbs": 40,
+                "fats": 12,
+                "fiber": 7
             },
             {
-                "type": "Lunch",
+                "type": "Lunch", "time": "1:00 PM",
                 "name": "Quinoa Salad Bowl",
                 "image_url": "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["1 cup cooked quinoa", "Black beans", "Sweet corn", "Lime-cilantro dressing"],
                 "steps": ["Combine quinoa, beans, and corn in a bowl.", "Toss with dressing.", "Serve chilled."],
                 "health_notes": "Fiber-rich and plant-based protein source.",
                 "calories": 450,
-                "protein_g": 15,
-                "carbs_g": 75,
-                "fats_g": 10,
-                "fiber_g": 12
+                "protein": 15,
+                "carbs": 75,
+                "fats": 10,
+                "fiber": 12
             },
             {
-                "type": "Lunch",
+                "type": "Lunch", "time": "1:00 PM",
                 "name": "Tuna Salad Lettuce Cups",
                 "image_url": "https://images.unsplash.com/photo-1543339308-43e59d6b73a6?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["1 can drained light tuna", "1 tbsp Greek yogurt", "Celery", "4 large romaine lettuce leaves"],
                 "steps": ["Mix tuna, Greek yogurt, and chopped celery in a bowl.", "Spoon into romaine leaves and serve."],
                 "health_notes": "Very low carb, high protein meal that cuts calories while keeping muscles full.",
                 "calories": 320,
-                "protein_g": 28,
-                "carbs_g": 8,
-                "fats_g": 16,
-                "fiber_g": 2
+                "protein": 28,
+                "carbs": 8,
+                "fats": 16,
+                "fiber": 2
             },
             {
-                "type": "Lunch",
+                "type": "Lunch", "time": "1:00 PM",
                 "name": "Lemon Grilled Chicken Salad",
                 "image_url": "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["150g chicken breast", "Mixed greens", "Lemon juice", "Olive oil dressing"],
                 "steps": ["Grill chicken breast until cooked.", "Toss greens, lemon juice, and olive oil.", "Slice chicken and place on top."],
                 "health_notes": "Classic clean diet staple for accelerating metabolic rate.",
                 "calories": 380,
-                "protein_g": 40,
-                "carbs_g": 15,
-                "fats_g": 14,
-                "fiber_g": 5
+                "protein": 40,
+                "carbs": 15,
+                "fats": 14,
+                "fiber": 5
             },
             {
-                "type": "Lunch",
+                "type": "Lunch", "time": "1:00 PM",
                 "name": "Lentil & Veggie Soup",
                 "image_url": "https://images.unsplash.com/photo-1547592165-e1d17fed6005?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["1 cup brown lentils", "Carrots and celery", "Vegetable broth", "Spinach"],
                 "steps": ["Simmer lentils, carrots, and celery in broth for 25 mins.", "Stir in spinach at the end.", "Serve hot."],
                 "health_notes": "Very filling plant meal with prebiotic fiber for fat burning support.",
                 "calories": 300,
-                "protein_g": 18,
-                "carbs_g": 48,
-                "fats_g": 4,
-                "fiber_g": 14
+                "protein": 18,
+                "carbs": 48,
+                "fats": 4,
+                "fiber": 14
             },
             {
-                "type": "Lunch",
+                "type": "Lunch", "time": "1:00 PM",
                 "name": "Mediterranean Chickpea Salad",
                 "image_url": "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["1 cup chickpeas", "Cherry tomatoes", "Cucumber", "Feta cheese", "Lemon juice"],
                 "steps": ["Toss chickpeas, chopped tomatoes, and cucumbers.", "Crumble feta over it and splash with lemon juice."],
                 "health_notes": "Balanced vegetarian lunch with low glycemic index profile.",
                 "calories": 360,
-                "protein_g": 14,
-                "carbs_g": 52,
-                "fats_g": 12,
-                "fiber_g": 10
+                "protein": 14,
+                "carbs": 52,
+                "fats": 12,
+                "fiber": 10
             }
         ],
         "Dinner": [
             {
-                "type": "Dinner",
+                "type": "Dinner", "time": "7:00 PM",
                 "name": "Tofu Vegetable Stir-Fry",
                 "image_url": "https://images.unsplash.com/photo-1532550907401-a500c9a57435?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["150g firm tofu", "Mixed stir-fry veggies", "1 tbsp low-sodium soy sauce", "Olive oil"],
                 "steps": ["Cube tofu and pan-fry until golden.", "Sauté veggies in a splash of olive oil.", "Combine and stir in soy sauce."],
                 "health_notes": "Low calorie, mineral-rich, and entirely plant-based.",
                 "calories": 350,
-                "protein_g": 20,
-                "carbs_g": 30,
-                "fats_g": 15,
-                "fiber_g": 8
+                "protein": 20,
+                "carbs": 30,
+                "fats": 15,
+                "fiber": 8
             },
             {
-                "type": "Dinner",
+                "type": "Dinner", "time": "7:00 PM",
                 "name": "Baked Salmon with Asparagus",
                 "image_url": "https://images.unsplash.com/photo-1467003909585-2f8a72700288?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["150g salmon filet", "1 bunch asparagus", "Lemon slices", "Olive oil"],
                 "steps": ["Preheat oven to 400F.", "Place salmon and asparagus on a baking sheet.", "Drizzle with oil, top with lemon, and bake for 12-15 mins."],
                 "health_notes": "Omega-3 rich dinner for cell repair and metabolic health.",
                 "calories": 500,
-                "protein_g": 40,
-                "carbs_g": 10,
-                "fats_g": 35,
-                "fiber_g": 4
+                "protein": 40,
+                "carbs": 10,
+                "fats": 35,
+                "fiber": 4
             },
             {
-                "type": "Dinner",
+                "type": "Dinner", "time": "7:00 PM",
                 "name": "Garlic Butter Shrimp with Zoodles",
                 "image_url": "https://images.unsplash.com/photo-1539750797207-44f772e80968?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["150g raw shrimp", "2 medium zucchini (spiralized)", "1 tbsp butter", "Garlic"],
                 "steps": ["Sauté garlic in butter.", "Cook shrimp until pink, then stir in zucchini noodles for 2 minutes.", "Serve immediately."],
                 "health_notes": "Extremely low-calorie meal with plenty of clean muscle-saving protein.",
                 "calories": 310,
-                "protein_g": 30,
-                "carbs_g": 12,
-                "fats_g": 16,
-                "fiber_g": 3
+                "protein": 30,
+                "carbs": 12,
+                "fats": 16,
+                "fiber": 3
             },
             {
-                "type": "Dinner",
+                "type": "Dinner", "time": "7:00 PM",
                 "name": "Grilled Chicken with Steamed Broccoli",
                 "image_url": "https://images.unsplash.com/photo-1532550907401-a500c9a57435?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["180g chicken breast", "2 cups broccoli florets", "1 tsp olive oil", "Garlic powder"],
                 "steps": ["Grill chicken seasoned with garlic powder.", "Steam broccoli until tender and drizzle with oil.", "Serve together."],
                 "health_notes": "Classic fitness staple for maximizing lean body mass configuration.",
                 "calories": 420,
-                "protein_g": 45,
-                "carbs_g": 20,
-                "fats_g": 10,
-                "fiber_g": 6
+                "protein": 45,
+                "carbs": 20,
+                "fats": 10,
+                "fiber": 6
             },
             {
-                "type": "Dinner",
+                "type": "Dinner", "time": "7:00 PM",
                 "name": "Baked White Fish with Herbs",
                 "image_url": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["150g cod or haddock", "1 cup cherry tomatoes", "Fresh parsley", "Lemon juice"],
                 "steps": ["Bake fish and cherry tomatoes at 375F for 18 minutes.", "Squeeze lemon juice and top with fresh parsley.", "Serve."],
                 "health_notes": "Very light dinner, easily digestible to improve sleep cycle recovery.",
                 "calories": 330,
-                "protein_g": 32,
-                "carbs_g": 8,
-                "fats_g": 12,
-                "fiber_g": 3
+                "protein": 32,
+                "carbs": 8,
+                "fats": 12,
+                "fiber": 3
             },
             {
-                "type": "Dinner",
+                "type": "Dinner", "time": "7:00 PM",
                 "name": "Turkey Burger Lettuce Wrap",
                 "image_url": "https://images.unsplash.com/photo-1626804475297-41607ea0d5eb?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["150g ground turkey patty", "2 large iceberg lettuce leaves", "Tomato slice", "Red onion"],
                 "steps": ["Pan-fry turkey patty until cooked.", "Wrap in lettuce leaves along with tomato and red onion.", "Serve."],
                 "health_notes": "Low calorie hamburger alternative offering pure protein.",
                 "calories": 380,
-                "protein_g": 34,
-                "carbs_g": 12,
-                "fats_g": 18,
-                "fiber_g": 4
+                "protein": 34,
+                "carbs": 12,
+                "fats": 18,
+                "fiber": 4
             }
         ]
     },
     "gain": {
         "Breakfast": [
             {
-                "type": "Breakfast",
+                "type": "Breakfast", "time": "8:00 AM",
                 "name": "Scrambled Eggs & Whole Wheat Bagel",
                 "image_url": "https://images.unsplash.com/photo-1525351484163-7529414344d8?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["3 whole eggs", "1 whole wheat bagel", "1 tbsp butter", "Spinach"],
                 "steps": ["Scramble eggs in butter.", "Toast bagel.", "Serve together with fresh spinach."],
                 "health_notes": "Calorie dense, high protein, and loaded with essential nutrients.",
                 "calories": 650,
-                "protein_g": 35,
-                "carbs_g": 60,
-                "fats_g": 25,
-                "fiber_g": 6
+                "protein": 35,
+                "carbs": 60,
+                "fats": 25,
+                "fiber": 6
             },
             {
-                "type": "Breakfast",
+                "type": "Breakfast", "time": "8:00 AM",
                 "name": "Peanut Butter Banana Toast",
                 "image_url": "https://images.unsplash.com/photo-1517673132405-a56a62b18caf?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["2 slices thick whole grain bread", "2 tbsp peanut butter", "1 banana", "Chia seeds"],
                 "steps": ["Toast the bread.", "Spread peanut butter evenly.", "Top with sliced banana and sprinkle chia seeds."],
                 "health_notes": "High healthy fats and complex carbs for energy.",
                 "calories": 550,
-                "protein_g": 18,
-                "carbs_g": 70,
-                "fats_g": 25,
-                "fiber_g": 12
+                "protein": 18,
+                "carbs": 70,
+                "fats": 25,
+                "fiber": 12
             },
             {
-                "type": "Breakfast",
+                "type": "Breakfast", "time": "8:00 AM",
                 "name": "High Protein Oatmeal (Whey)",
                 "image_url": "https://images.unsplash.com/photo-1517673132405-a56a62b18caf?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["1.5 cups oats", "1.5 scoops chocolate protein powder", "1 cup milk", "1/2 cup blueberries"],
                 "steps": ["Cook oats in milk.", "Stir in protein powder off heat.", "Top with blueberries and serve."],
                 "health_notes": "Slow-release carbs and premium proteins to sustain muscle building.",
                 "calories": 600,
-                "protein_g": 40,
-                "carbs_g": 75,
-                "fats_g": 14,
-                "fiber_g": 9
+                "protein": 40,
+                "carbs": 75,
+                "fats": 14,
+                "fiber": 9
             },
             {
-                "type": "Breakfast",
+                "type": "Breakfast", "time": "8:00 AM",
                 "name": "Meat Lover's Egg Scramble",
                 "image_url": "https://images.unsplash.com/photo-1525351484163-7529414344d8?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["4 whole eggs", "50g cooked turkey bacon", "50g diced chicken sausage", "1/2 cup cheddar cheese"],
                 "steps": ["Scramble eggs in pan.", "Fold in cooked meats and top with cheese to melt.", "Serve warm."],
                 "health_notes": "Extremely calorie and protein dense for mass gainer phase.",
                 "calories": 700,
-                "protein_g": 48,
-                "carbs_g": 15,
-                "fats_g": 48,
-                "fiber_g": 2
+                "protein": 48,
+                "carbs": 15,
+                "fats": 48,
+                "fiber": 2
             },
             {
-                "type": "Breakfast",
+                "type": "Breakfast", "time": "8:00 AM",
                 "name": "Power Protein Pancakes",
                 "image_url": "https://images.unsplash.com/photo-1493770348161-369560ae357d?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["1 cup protein pancake mix", "1 whole egg", "1 tbsp syrup", "1/2 cup raspberries"],
                 "steps": ["Prepare pancakes on griddle using the mix and egg.", "Top with syrup and raspberries.", "Serve."],
                 "health_notes": "Dense carbohydrates paired with quick-acting amino acids.",
                 "calories": 650,
-                "protein_g": 38,
-                "carbs_g": 85,
-                "fats_g": 12,
-                "fiber_g": 8
+                "protein": 38,
+                "carbs": 85,
+                "fats": 12,
+                "fiber": 8
             },
             {
-                "type": "Breakfast",
+                "type": "Breakfast", "time": "8:00 AM",
                 "name": "Cottage Cheese & Fruit Bowl",
                 "image_url": "https://images.unsplash.com/photo-1488477181946-6428a0291777?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["1.5 cups full fat cottage cheese", "1 sliced apple", "1/4 cup walnuts", "2 tbsp honey"],
                 "steps": ["Place cottage cheese in a large bowl.", "Top with apple slices and walnuts.", "Drizzle honey on top and eat."],
                 "health_notes": "Slow-release casein protein ideal to prevent morning muscle catabolism.",
                 "calories": 500,
-                "protein_g": 32,
-                "carbs_g": 55,
-                "fats_g": 10,
-                "fiber_g": 6
+                "protein": 32,
+                "carbs": 55,
+                "fats": 10,
+                "fiber": 6
             }
         ],
         "Lunch": [
             {
-                "type": "Lunch",
+                "type": "Lunch", "time": "1:00 PM",
                 "name": "Tuna Pasta Salad",
                 "image_url": "https://images.unsplash.com/photo-1543339308-43e59d6b73a6?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["150g canned tuna", "1.5 cups cooked whole wheat pasta", "1 tbsp olive oil mayonnaise", "Peas"],
                 "steps": ["Boil and drain pasta.", "Mix tuna, peas, and mayo in a bowl.", "Toss with pasta and refrigerate."],
                 "health_notes": "Excellent carb-to-protein ratio for muscle building.",
                 "calories": 750,
-                "protein_g": 48,
-                "carbs_g": 95,
-                "fats_g": 18,
-                "fiber_g": 9
+                "protein": 48,
+                "carbs": 95,
+                "fats": 18,
+                "fiber": 9
             },
             {
-                "type": "Lunch",
+                "type": "Lunch", "time": "1:00 PM",
                 "name": "Turkey & Avocado Sandwich",
                 "image_url": "https://images.unsplash.com/photo-1626804475297-41607ea0d5eb?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["4 slices turkey breast", "2 slices whole grain bread", "1/2 avocado", "Swiss cheese"],
                 "steps": ["Assemble sandwich with turkey, cheese, and mashed avocado.", "Grill slightly if desired."],
                 "health_notes": "Healthy fats and fast digesting proteins.",
                 "calories": 600,
-                "protein_g": 38,
-                "carbs_g": 50,
-                "fats_g": 26,
-                "fiber_g": 10
+                "protein": 38,
+                "carbs": 50,
+                "fats": 26,
+                "fiber": 10
             },
             {
-                "type": "Lunch",
+                "type": "Lunch", "time": "1:00 PM",
                 "name": "Beef & Jasmine Rice Bowl",
                 "image_url": "https://images.unsplash.com/photo-1543339308-43e59d6b73a6?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["200g lean beef mince", "1.5 cups jasmine rice", "Green beans", "Soy sauce"],
                 "steps": ["Brown beef in a skillet.", "Steam rice and beans.", "Combine and drizzle with soy sauce."],
                 "health_notes": "High carbs to replenish glycogen post-workout.",
                 "calories": 850,
-                "protein_g": 55,
-                "carbs_g": 110,
-                "fats_g": 22,
-                "fiber_g": 6
+                "protein": 55,
+                "carbs": 110,
+                "fats": 22,
+                "fiber": 6
             },
             {
-                "type": "Lunch",
+                "type": "Lunch", "time": "1:00 PM",
                 "name": "Grilled Chicken with Sweet Potato",
                 "image_url": "https://images.unsplash.com/photo-1532550907401-a500c9a57435?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["200g chicken breast", "1 large baked sweet potato", "1 cup green beans"],
                 "steps": ["Grill chicken breast until cooked.", "Bake sweet potato and serve with steamed green beans."],
                 "health_notes": "Clean bulking meal containing essential complex carbohydrates.",
                 "calories": 700,
-                "protein_g": 50,
-                "carbs_g": 90,
-                "fats_g": 12,
-                "fiber_g": 8
+                "protein": 50,
+                "carbs": 90,
+                "fats": 12,
+                "fiber": 8
             },
             {
-                "type": "Lunch",
+                "type": "Lunch", "time": "1:00 PM",
                 "name": "Salmon & Brown Rice Plate",
                 "image_url": "https://images.unsplash.com/photo-1467003909585-2f8a72700288?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["180g salmon filet", "1.5 cups brown rice", "Roasted carrots"],
                 "steps": ["Pan-sear salmon.", "Cook brown rice and roast carrots at 400F for 20 mins.", "Combine on a plate."],
                 "health_notes": "Packed with healthy omega-3 fatty acids for joint lubrication.",
                 "calories": 800,
-                "protein_g": 45,
-                "carbs_g": 85,
-                "fats_g": 28,
-                "fiber_g": 7
+                "protein": 45,
+                "carbs": 85,
+                "fats": 28,
+                "fiber": 7
             },
             {
-                "type": "Lunch",
+                "type": "Lunch", "time": "1:00 PM",
                 "name": "Loaded Quinoa & Steak Bowl",
                 "image_url": "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["180g flank steak", "1.5 cups cooked quinoa", "1/2 cup black beans", "1/2 avocado"],
                 "steps": ["Grill steak and slice thin.", "Arrange quinoa, steak slices, black beans, and avocado in a bowl.", "Serve."],
                 "health_notes": "Premium micronutrient density for athletic strength phases.",
                 "calories": 900,
-                "protein_g": 58,
-                "carbs_g": 100,
-                "fats_g": 32,
-                "fiber_g": 11
+                "protein": 58,
+                "carbs": 100,
+                "fats": 32,
+                "fiber": 11
             }
         ],
         "Dinner": [
             {
-                "type": "Dinner",
+                "type": "Dinner", "time": "7:00 PM",
                 "name": "Teriyaki Chicken and Rice",
                 "image_url": "https://images.unsplash.com/photo-1532550907401-a500c9a57435?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["200g chicken thigh", "1.5 cups white jasmine rice", "Teriyaki sauce", "Broccoli"],
                 "steps": ["Pan-fry chicken thighs until cooked through.", "Toss with teriyaki sauce.", "Serve with steamed rice and broccoli."],
                 "health_notes": "Rich in protein and fast carbs to accelerate post-workout recovery.",
                 "calories": 850,
-                "protein_g": 52,
-                "carbs_g": 110,
-                "fats_g": 22,
-                "fiber_g": 6
+                "protein": 52,
+                "carbs": 110,
+                "fats": 22,
+                "fiber": 6
             },
             {
-                "type": "Dinner",
+                "type": "Dinner", "time": "7:00 PM",
                 "name": "Ribeye Steak & Loaded Potato",
                 "image_url": "https://images.unsplash.com/photo-1543339308-43e59d6b73a6?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["200g ribeye steak", "1 large russet potato", "Sour cream", "Chives"],
                 "steps": ["Sear steak in a hot skillet to desired doneness.", "Bake potato, slice open, and top with sour cream and chives."],
                 "health_notes": "High protein, zinc, and iron for muscle synthesis.",
                 "calories": 950,
-                "protein_g": 58,
-                "carbs_g": 70,
-                "fats_g": 48,
-                "fiber_g": 8
+                "protein": 58,
+                "carbs": 70,
+                "fats": 48,
+                "fiber": 8
             },
             {
-                "type": "Dinner",
+                "type": "Dinner", "time": "7:00 PM",
                 "name": "Pork Chops with Roasted Potatoes",
                 "image_url": "https://images.unsplash.com/photo-1543339308-43e59d6b73a6?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["200g pork chops", "1.5 cups baby potatoes (halved)", "Olive oil", "Rosemary"],
                 "steps": ["Pan-sear pork chops with herbs.", "Toss potatoes in oil and rosemary, roast at 400F for 25 mins.", "Serve."],
                 "health_notes": "Clean high protein density that breaks up chicken boredom.",
                 "calories": 800,
-                "protein_g": 46,
-                "carbs_g": 65,
-                "fats_g": 30,
-                "fiber_g": 7
+                "protein": 46,
+                "carbs": 65,
+                "fats": 30,
+                "fiber": 7
             },
             {
-                "type": "Dinner",
+                "type": "Dinner", "time": "7:00 PM",
                 "name": "Salmon Pasta in Garlic Cream",
                 "image_url": "https://images.unsplash.com/photo-1467003909585-2f8a72700288?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["150g cooked salmon", "1.5 cups penne pasta", "1/4 cup heavy cream", "Garlic and parsley"],
                 "steps": ["Boil penne pasta.", "Warm cream and garlic in a pan, toss with pasta.", "Flake salmon and stir in with parsley.", "Serve."],
                 "health_notes": "Excellent calorie surplus profile to support heavy leg-day recovery.",
                 "calories": 900,
-                "protein_g": 50,
-                "carbs_g": 105,
-                "fats_g": 34,
-                "fiber_g": 6
+                "protein": 50,
+                "carbs": 105,
+                "fats": 34,
+                "fiber": 6
             },
             {
-                "type": "Dinner",
+                "type": "Dinner", "time": "7:00 PM",
                 "name": "Beef Stir-Fry with Egg Noodles",
                 "image_url": "https://images.unsplash.com/photo-1532550907401-a500c9a57435?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["200g beef sirloin strips", "1.5 cups egg noodles", "Bell peppers", "Stir-fry sauce"],
                 "steps": ["Sauté beef and peppers.", "Boil noodles and combine in pan.", "Stir in sauce for 2 minutes and serve."],
                 "health_notes": "High carbohydrate load to quickly fill depleted glycogen stores.",
                 "calories": 880,
-                "protein_g": 54,
-                "carbs_g": 95,
-                "fats_g": 28,
-                "fiber_g": 8
+                "protein": 54,
+                "carbs": 95,
+                "fats": 28,
+                "fiber": 8
             },
             {
-                "type": "Dinner",
+                "type": "Dinner", "time": "7:00 PM",
                 "name": "Grilled Turkey Breast with Rice",
                 "image_url": "https://images.unsplash.com/photo-1626804475297-41607ea0d5eb?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["200g turkey breast", "1.5 cups white rice", "Roasted cauliflower"],
                 "steps": ["Grill turkey breast.", "Boil rice and steam cauliflower.", "Serve together."],
                 "health_notes": "Very clean muscle gainer profile with trace fats.",
                 "calories": 750,
-                "protein_g": 48,
-                "carbs_g": 90,
-                "fats_g": 18,
-                "fiber_g": 5
+                "protein": 48,
+                "carbs": 90,
+                "fats": 18,
+                "fiber": 5
             }
         ]
     },
     "general": {
         "Breakfast": [
             {
-                "type": "Breakfast",
+                "type": "Breakfast", "time": "8:00 AM",
                 "name": "Fruit Smoothie Bowl",
                 "image_url": "https://images.unsplash.com/photo-1493770348161-369560ae357d?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["1 cup frozen berries", "1 banana", "1/2 cup almond milk", "Granola"],
                 "steps": ["Blend berries, banana, and almond milk until smooth.", "Pour into a bowl and top with granola."],
                 "health_notes": "Vitamins, antioxidants, and a quick energy boost.",
                 "calories": 350,
-                "protein_g": 8,
-                "carbs_g": 65,
-                "fats_g": 6,
-                "fiber_g": 9
+                "protein": 8,
+                "carbs": 65,
+                "fats": 6,
+                "fiber": 9
             },
             {
-                "type": "Breakfast",
+                "type": "Breakfast", "time": "8:00 AM",
                 "name": "Scrambled Eggs with Veggies",
                 "image_url": "https://images.unsplash.com/photo-1525351484163-7529414344d8?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["2 eggs", "Bell peppers", "Onions", "1 slice whole wheat toast"],
                 "steps": ["Sauté chopped peppers and onions.", "Whisk in eggs and scramble.", "Serve with toast."],
                 "health_notes": "Balanced protein and micronutrients.",
                 "calories": 380,
-                "protein_g": 20,
-                "carbs_g": 30,
-                "fats_g": 16,
-                "fiber_g": 5
+                "protein": 20,
+                "carbs": 30,
+                "fats": 16,
+                "fiber": 5
             },
             {
-                "type": "Breakfast",
+                "type": "Breakfast", "time": "8:00 AM",
                 "name": "Overnight Oats with Honey",
                 "image_url": "https://images.unsplash.com/photo-1517673132405-a56a62b18caf?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["1 cup rolled oats", "1 cup almond milk", "1 tbsp honey", "Walnuts"],
                 "steps": ["Mix oats, almond milk, and honey in a jar.", "Leave in fridge overnight.", "Top with walnuts and eat."],
                 "health_notes": "Excellent dietary fiber source supporting heart health.",
                 "calories": 400,
-                "protein_g": 12,
-                "carbs_g": 65,
-                "fats_g": 8,
-                "fiber_g": 8
+                "protein": 12,
+                "carbs": 65,
+                "fats": 8,
+                "fiber": 8
             },
             {
-                "type": "Breakfast",
+                "type": "Breakfast", "time": "8:00 AM",
                 "name": "Whole Wheat Pancakes with Berries",
                 "image_url": "https://images.unsplash.com/photo-1493770348161-369560ae357d?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["1 cup whole wheat pancake mix", "1 egg", "1/2 cup fresh blueberries"],
                 "steps": ["Prepare pancakes on skillet.", "Top with blueberries and serve."],
                 "health_notes": "Complex carb profile with zero artificial sugars.",
                 "calories": 420,
-                "protein_g": 14,
-                "carbs_g": 75,
-                "fats_g": 6,
-                "fiber_g": 8
+                "protein": 14,
+                "carbs": 75,
+                "fats": 6,
+                "fiber": 8
             },
             {
-                "type": "Breakfast",
+                "type": "Breakfast", "time": "8:00 AM",
                 "name": "Toast with Hummus and Tomatoes",
                 "image_url": "https://images.unsplash.com/photo-1525351484163-7529414344d8?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["2 slices rye bread", "3 tbsp hummus", "Cherry tomatoes", "Olive oil"],
                 "steps": ["Toast rye bread.", "Spread hummus, top with sliced tomatoes and drizzle olive oil.", "Serve."],
                 "health_notes": "Mediterranean diet inspired, vegan-friendly breakfast option.",
                 "calories": 360,
-                "protein_g": 12,
-                "carbs_g": 45,
-                "fats_g": 14,
-                "fiber_g": 7
+                "protein": 12,
+                "carbs": 45,
+                "fats": 14,
+                "fiber": 7
             },
             {
-                "type": "Breakfast",
+                "type": "Breakfast", "time": "8:00 AM",
                 "name": "Avocado and Cottage Cheese Toast",
                 "image_url": "https://images.unsplash.com/photo-1488477181946-6428a0291777?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["1 slice sourdough bread", "1/2 avocado", "1/2 cup cottage cheese"],
                 "steps": ["Toast sourdough bread.", "Spread cottage cheese, top with sliced avocado.", "Season with black pepper and serve."],
                 "health_notes": "Balanced fats and proteins that release energy steadily.",
                 "calories": 390,
-                "protein_g": 18,
-                "carbs_g": 35,
-                "fats_g": 16,
-                "fiber_g": 6
+                "protein": 18,
+                "carbs": 35,
+                "fats": 16,
+                "fiber": 6
             }
         ],
         "Lunch": [
             {
-                "type": "Lunch",
+                "type": "Lunch", "time": "1:00 PM",
                 "name": "Chickpea Salad Wrap",
                 "image_url": "https://images.unsplash.com/photo-1626804475297-41607ea0d5eb?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["1 cup mashed chickpeas", "1 tbsp light mayo", "Celery", "Whole wheat wrap"],
                 "steps": ["Mix chickpeas, celery, and mayo.", "Spread onto wrap and roll up."],
                 "health_notes": "Plant-based protein, high fiber.",
                 "calories": 480,
-                "protein_g": 16,
-                "carbs_g": 60,
-                "fats_g": 14,
-                "fiber_g": 12
+                "protein": 16,
+                "carbs": 60,
+                "fats": 14,
+                "fiber": 12
             },
             {
-                "type": "Lunch",
+                "type": "Lunch", "time": "1:00 PM",
                 "name": "Mediterranean Lentil Salad",
                 "image_url": "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["1 cup cooked brown lentils", "Cucumber", "Feta cheese", "Olive oil & lemon"],
                 "steps": ["Toss lentils, chopped cucumber, and feta.", "Drizzle with olive oil and lemon juice."],
                 "health_notes": "Heart-healthy fats and clean proteins.",
                 "calories": 420,
-                "protein_g": 18,
-                "carbs_g": 50,
-                "fats_g": 15,
-                "fiber_g": 11
+                "protein": 18,
+                "carbs": 50,
+                "fats": 15,
+                "fiber": 11
             },
             {
-                "type": "Lunch",
+                "type": "Lunch", "time": "1:00 PM",
                 "name": "Chicken Caesar Salad (Light)",
                 "image_url": "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["120g chicken breast", "2 cups romaine lettuce", "1 tbsp light Caesar dressing", "Parmesan"],
                 "steps": ["Grill and slice chicken breast.", "Toss romaine lettuce with dressing.", "Combine and sprinkle cheese on top."],
                 "health_notes": "High volume lunch with balanced protein.",
                 "calories": 460,
-                "protein_g": 32,
-                "carbs_g": 20,
-                "fats_g": 24,
-                "fiber_g": 4
+                "protein": 32,
+                "carbs": 20,
+                "fats": 24,
+                "fiber": 4
             },
             {
-                "type": "Lunch",
+                "type": "Lunch", "time": "1:00 PM",
                 "name": "Quinoa & Veggie Stuffed Peppers",
                 "image_url": "https://images.unsplash.com/photo-1547592165-e1d17fed6005?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["2 bell peppers", "1 cup cooked quinoa", "Mixed black beans and corn"],
                 "steps": ["Cut peppers in half and clean.", "Mix quinoa, beans, and corn; stuff into peppers.", "Bake at 375F for 20 minutes."],
                 "health_notes": "Completely vegetarian, loaded with vitamins and clean carbs.",
                 "calories": 410,
-                "protein_g": 14,
-                "carbs_g": 65,
-                "fats_g": 10,
-                "fiber_g": 9
+                "protein": 14,
+                "carbs": 65,
+                "fats": 10,
+                "fiber": 9
             },
             {
-                "type": "Lunch",
+                "type": "Lunch", "time": "1:00 PM",
                 "name": "Turkey Breast & Cheese Sandwich",
                 "image_url": "https://images.unsplash.com/photo-1626804475297-41607ea0d5eb?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["100g sliced turkey breast", "1 slice provolone", "2 slices wheat bread", "Mustard"],
                 "steps": ["Assemble sandwich with turkey, cheese, lettuce, and mustard.", "Serve immediately."],
                 "health_notes": "Quick and classic lunch with simple macros.",
                 "calories": 450,
-                "protein_g": 28,
-                "carbs_g": 42,
-                "fats_g": 14,
-                "fiber_g": 5
+                "protein": 28,
+                "carbs": 42,
+                "fats": 14,
+                "fiber": 5
             },
             {
-                "type": "Lunch",
+                "type": "Lunch", "time": "1:00 PM",
                 "name": "Black Bean and Corn Bowl",
                 "image_url": "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["1 cup black beans", "1 cup corn", "Cilantro", "Red onion", "Olive oil dressing"],
                 "steps": ["Mix black beans, corn, chopped onion, and cilantro.", "Toss with olive oil dressing and serve."],
                 "health_notes": "Excellent dietary fiber profile for gut health.",
                 "calories": 430,
-                "protein_g": 15,
-                "carbs_g": 68,
-                "fats_g": 12,
-                "fiber_g": 11
+                "protein": 15,
+                "carbs": 68,
+                "fats": 12,
+                "fiber": 11
             }
         ],
         "Dinner": [
             {
-                "type": "Dinner",
+                "type": "Dinner", "time": "7:00 PM",
                 "name": "Turkey Meatballs & Spaghetti Squash",
                 "image_url": "https://images.unsplash.com/photo-1532550907401-a500c9a57435?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["150g turkey meatballs", "1 medium spaghetti squash", "Marinara sauce"],
                 "steps": ["Bake spaghetti squash, scrape out strands.", "Warm meatballs in marinara sauce.", "Serve meatballs and sauce over squash."],
                 "health_notes": "Low carb, high protein alternative to pasta.",
                 "calories": 550,
-                "protein_g": 38,
-                "carbs_g": 40,
-                "fats_g": 22,
-                "fiber_g": 8
+                "protein": 38,
+                "carbs": 40,
+                "fats": 22,
+                "fiber": 8
             },
             {
-                "type": "Dinner",
+                "type": "Dinner", "time": "7:00 PM",
                 "name": "Lemon Herb Grilled Chicken",
                 "image_url": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["150g chicken breast", "Zucchini noodles", "Pesto sauce", "Cherry tomatoes"],
                 "steps": ["Marinate and grill chicken breast.", "Sauté zucchini noodles with pesto and tomatoes.", "Slice chicken and place on top."],
                 "health_notes": "Light, clean, low sodium dinner.",
                 "calories": 500,
-                "protein_g": 45,
-                "carbs_g": 15,
-                "fats_g": 28,
-                "fiber_g": 4
+                "protein": 45,
+                "carbs": 15,
+                "fats": 28,
+                "fiber": 4
             },
             {
-                "type": "Dinner",
+                "type": "Dinner", "time": "7:00 PM",
                 "name": "Baked Cod with Mixed Roasted Veggies",
                 "image_url": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["150g cod filet", "1 cup cherry tomatoes", "1 cup sliced zucchini", "Olive oil"],
                 "steps": ["Place cod and veggies on a baking sheet, drizzle with olive oil.", "Bake at 400F for 18 minutes.", "Serve."],
                 "health_notes": "Rich in lean protein and essential minerals.",
                 "calories": 480,
-                "protein_g": 32,
-                "carbs_g": 35,
-                "fats_g": 18,
-                "fiber_g": 7
+                "protein": 32,
+                "carbs": 35,
+                "fats": 18,
+                "fiber": 7
             },
             {
-                "type": "Dinner",
+                "type": "Dinner", "time": "7:00 PM",
                 "name": "Teriyaki Tofu Bowl with Brown Rice",
                 "image_url": "https://images.unsplash.com/photo-1532550907401-a500c9a57435?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["150g tofu", "1 cup brown rice", "Teriyaki sauce", "Broccoli"],
                 "steps": ["Pan-sear tofu and cook brown rice.", "Steam broccoli.", "Assemble in a bowl and drizzle with teriyaki sauce."],
                 "health_notes": "Balanced vegetarian dinner option.",
                 "calories": 520,
-                "protein_g": 22,
-                "carbs_g": 78,
-                "fats_g": 14,
-                "fiber_g": 9
+                "protein": 22,
+                "carbs": 78,
+                "fats": 14,
+                "fiber": 9
             },
             {
-                "type": "Dinner",
+                "type": "Dinner", "time": "7:00 PM",
                 "name": "Beef & Broccoli Stir-Fry (Light)",
                 "image_url": "https://images.unsplash.com/photo-1532550907401-a500c9a57435?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["150g beef flank strips", "2 cups broccoli", "1 tbsp soy sauce", "Ginger"],
                 "steps": ["Sauté beef flank strips with ginger.", "Add broccoli and soy sauce, cover and cook for 5 minutes.", "Serve."],
                 "health_notes": "High iron and protein dinner choice.",
                 "calories": 580,
-                "protein_g": 40,
-                "carbs_g": 45,
-                "fats_g": 22,
-                "fiber_g": 6
+                "protein": 40,
+                "carbs": 45,
+                "fats": 22,
+                "fiber": 6
             },
             {
-                "type": "Dinner",
+                "type": "Dinner", "time": "7:00 PM",
                 "name": "Shrimp Scampi with Whole Wheat Pasta",
                 "image_url": "https://images.unsplash.com/photo-1539750797207-44f772e80968?q=80&w=400&auto=format&fit=crop",
                 "ingredients": ["150g shrimp", "1 cup whole wheat spaghetti", "1 tbsp butter", "Garlic", "Lemon"],
                 "steps": ["Boil spaghetti.", "Sauté garlic and shrimp in butter, splash with lemon.", "Toss with pasta and serve."],
                 "health_notes": "Delicious high protein seafood dish.",
                 "calories": 540,
-                "protein_g": 34,
-                "carbs_g": 65,
-                "fats_g": 14,
-                "fiber_g": 6
+                "protein": 34,
+                "carbs": 65,
+                "fats": 14,
+                "fiber": 6
             }
         ]
     }
@@ -2065,10 +2065,10 @@ def get_alternative_meal(goal_str: str, meal_type: str, current_meal_name: str, 
         "steps": ["Prepare and enjoy."],
         "health_notes": "Balanced nutritious meal.",
         "calories": 400,
-        "protein_g": 20,
-        "carbs_g": 40,
-        "fats_g": 15,
-        "fiber_g": 5
+        "protein": 20,
+        "carbs": 40,
+        "fats": 15,
+        "fiber": 5
     }
 
 
@@ -2101,10 +2101,10 @@ def perform_swap_logic(nut_plan: dict, day_name: str, meal_type: str, fitness_go
     # Recalculate actual_totals for the day
     actual_totals = {
         "calories": 0,
-        "protein_g": 0,
-        "carbs_g": 0,
-        "fats_g": 0,
-        "fiber_g": 0
+        "protein": 0,
+        "carbs": 0,
+        "fats": 0,
+        "fiber": 0
     }
     for m in meals:
         if m.get("completed", False):
@@ -2328,10 +2328,10 @@ async def complete_meal_plan_meal(
     # Recalculate actual_totals for the day
     actual_totals = {
         "calories": 0,
-        "protein_g": 0,
-        "carbs_g": 0,
-        "fats_g": 0,
-        "fiber_g": 0
+        "protein": 0,
+        "carbs": 0,
+        "fats": 0,
+        "fiber": 0
     }
     for m in meals:
         if m.get("completed", False):
