@@ -2404,7 +2404,8 @@ async def update_user_profile(
     
     if profile_image:
         os.makedirs("uploads", exist_ok=True)
-        ext = os.path.splitext(profile_image.filename)[1]
+        filename_val = profile_image.filename or ""
+        ext = os.path.splitext(filename_val)[1]
         if not ext:
             ext = ".jpg"
         filename = f"{uuid.uuid4()}{ext}"
@@ -2480,7 +2481,8 @@ async def contact_us(
     public_url = None
     if file:
         os.makedirs("uploads", exist_ok=True)
-        ext = os.path.splitext(file.filename)[1]
+        filename_val = file.filename or ""
+        ext = os.path.splitext(filename_val)[1]
         if not ext:
             ext = ".jpg"
         filename = f"{uuid.uuid4()}{ext}"
