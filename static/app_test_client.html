@@ -1,0 +1,1599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FitVision - App Integration Tester</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Google Identity Services SDK -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <style>
+        :root {
+            --bg-color: #0b0c10;
+            --card-bg: rgba(22, 26, 35, 0.7);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --primary-color: #ffb703;
+            --primary-hover: #fb8500;
+            --text-color: #f8f9fa;
+            --text-muted: #8b9bb4;
+            --success-color: #2ec4b6;
+            --error-color: #e63946;
+            --info-color: #0077b6;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            padding: 2rem;
+            background-image: radial-gradient(circle at 10% 15%, rgba(255, 183, 3, 0.04) 0%, transparent 40%),
+                              radial-gradient(circle at 90% 85%, rgba(251, 133, 0, 0.04) 0%, transparent 40%);
+        }
+
+        .main-container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .logo-section h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: var(--primary-color);
+            text-shadow: 0 0 10px rgba(255, 183, 3, 0.2);
+        }
+
+        .logo-section p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 0.2rem;
+        }
+
+        .config-bar {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            padding: 0.5rem 1rem;
+            border-radius: 12px;
+        }
+
+        .config-bar label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .config-bar input {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.4rem 0.8rem;
+            color: var(--text-color);
+            font-size: 0.9rem;
+            width: 220px;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            gap: 2rem;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-muted);
+            padding: 0.9rem 1.2rem;
+            border-radius: 12px;
+            text-align: left;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-color);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .tab-btn.active {
+            color: #000;
+            background: var(--primary-color);
+            box-shadow: 0 4px 15px rgba(255, 183, 3, 0.25);
+        }
+
+        .content {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(16px);
+            border-radius: 24px;
+            padding: 2.5rem;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            min-height: 500px;
+        }
+
+        .tab-panel {
+            display: none;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.75rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .input-group.full-width {
+            grid-column: span 2;
+        }
+
+        label {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input, select {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 0.8rem 1rem;
+            color: var(--text-color);
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 8px rgba(255, 183, 3, 0.15);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .btn {
+            background: var(--primary-color);
+            color: #000;
+            font-weight: 700;
+            font-size: 0.95rem;
+            border: none;
+            border-radius: 12px;
+            padding: 0.9rem 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(255, 183, 3, 0.2);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+        }
+
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--text-muted);
+            transform: none;
+            box-shadow: none;
+        }
+
+        .day-pill {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+            color: var(--text-muted);
+        }
+
+        .day-pill.active {
+            background: var(--primary-color);
+            color: #000;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 10px rgba(255, 183, 3, 0.3);
+        }
+
+        .day-pill:hover {
+            transform: scale(1.05);
+        }
+
+        .token-display {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: rgba(46, 196, 182, 0.08);
+            border: 1px solid rgba(46, 196, 182, 0.2);
+            border-radius: 12px;
+            font-size: 0.85rem;
+            color: var(--success-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Logs Console */
+        .logs-container {
+            margin-top: 2rem;
+            background: rgba(0, 0, 0, 0.45);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+
+        .logs-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .logs-header h3 {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .log-box {
+            font-family: monospace;
+            font-size: 0.85rem;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            color: #d1d5db;
+        }
+
+        /* Dashboard UI Mock components */
+        .dash-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .dash-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+
+        .dash-card.full-width {
+            grid-column: span 2;
+        }
+
+        .completion-circle {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            background: conic-gradient(var(--primary-color) 0%, rgba(255,255,255,0.05) 0%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .completion-circle::after {
+            content: '';
+            position: absolute;
+            width: 115px;
+            height: 115px;
+            background: var(--bg-color);
+            border-radius: 50%;
+        }
+
+        .completion-text {
+            position: relative;
+            z-index: 10;
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--text-color);
+            text-align: center;
+        }
+
+        .completion-text span {
+            font-size: 0.8rem;
+            display: block;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .metric-row:last-child {
+            border-bottom: none;
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .metric-value {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .metric-value span {
+            color: var(--primary-color);
+        }
+
+        /* Weekly Graph representation */
+        .chart-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            height: 150px;
+            padding-top: 1rem;
+        }
+
+        .chart-bar-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 12%;
+        }
+
+        .chart-bar-wrapper {
+            width: 12px;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            display: flex;
+            align-items: flex-end;
+            position: relative;
+        }
+
+        .chart-bar {
+            width: 100%;
+            height: 0%;
+            background: var(--primary-color);
+            border-radius: 6px;
+            transition: height 0.6s ease;
+            box-shadow: 0 0 10px rgba(255, 183, 3, 0.3);
+        }
+
+        .chart-label {
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .chart-value-bubble {
+            font-size: 0.65rem;
+            position: absolute;
+            bottom: 105%;
+            left: 50%;
+            transform: translateX(-50%);
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+
+        .google-btn-container {
+            display: flex;
+            justify-content: center;
+            margin: 1rem 0;
+            min-height: 44px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-container">
+    <header>
+        <div class="logo-section">
+            <h1>FIT VISION</h1>
+            <p>Full API Integration & Dashboard Tester</p>
+        </div>
+        <div class="config-bar">
+            <label for="apiUrl">API URL</label>
+            <input type="text" id="apiUrl" value="https://fitvision.medaide.org">
+        </div>
+    </header>
+
+    <div class="layout">
+        <!-- Sidebar Navigation tabs -->
+        <div class="sidebar">
+            <button class="tab-btn active" onclick="switchTab('authTab')">👤 Sign In & Up</button>
+            <button class="tab-btn" onclick="switchTab('googleTab')">🔑 Google Login</button>
+            <button class="tab-btn" onclick="switchTab('forgotTab')">🔒 Password Reset</button>
+            <button class="tab-btn" onclick="switchTab('goalsTab')">🎯 Fitness Goals</button>
+            <button class="tab-btn" onclick="switchTab('dashboardTab')">📊 Dashboard</button>
+            <button class="tab-btn" onclick="switchTab('workoutsTab')">🏋️ Log Workouts</button>
+        </div>
+
+        <!-- Main Content Panel -->
+        <div class="content">
+            <!-- Auth tab (Signup / Login) -->
+            <div id="authTab" class="tab-panel active">
+                <h2>1. Sign Up & Log In</h2>
+                <div class="form-grid">
+                    <div class="input-group full-width">
+                        <label for="regEmail">Email Address</label>
+                        <input type="email" id="regEmail" placeholder="e.g. alex@example.com">
+                    </div>
+                    <div class="input-group">
+                        <label for="regGender">Gender</label>
+                        <select id="regGender">
+                            <option value="">Select Gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                            <option value="Prefer not to say">Prefer not to say</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="regDob">Date of Birth</label>
+                        <input type="date" id="regDob">
+                    </div>
+                    <div class="input-group full-width">
+                        <label for="regPassword">Password</label>
+                        <input type="password" id="regPassword" placeholder="Minimum 6 characters">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button class="btn" onclick="handleSignup()">Create Account</button>
+                    <button class="btn btn-outline" onclick="handleLogin()">Login (Using Form Fields)</button>
+                </div>
+                <div id="tokenContainer" class="token-display hidden">
+                    <span>Logged In! Auth Token: <strong id="tokenVal">...</strong></span>
+                    <button class="btn btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;" onclick="clearToken()">Logout</button>
+                </div>
+            </div>
+
+            <!-- Google login tab -->
+            <div id="googleTab" class="tab-panel">
+                <h2>2. Google Sign-In Integration</h2>
+                <div class="input-group" style="margin-bottom: 1.5rem;">
+                    <label for="googleClientId">Google OAuth Client ID</label>
+                    <input type="text" id="googleClientId" value="272845957801-lel0bj139oa9tic61f419du4fgpspc7c.apps.googleusercontent.com" placeholder="Paste your Google OAuth client ID here...">
+                </div>
+                <button class="btn" onclick="initGoogleAuth()">Initialize Google Button</button>
+                <div class="google-btn-container">
+                    <div id="googleBtnDiv"></div>
+                </div>
+            </div>
+
+            <!-- Forgot password tab -->
+            <div id="forgotTab" class="tab-panel">
+                <h2>3. Forgot & Reset Password Flow</h2>
+                
+                <!-- Phase 1: Request OTP -->
+                <div id="forgotPhase1">
+                    <div class="input-group" style="margin-bottom: 1.5rem;">
+                        <label for="forgotEmail">Registered Email</label>
+                        <input type="email" id="forgotEmail" placeholder="Enter your email to receive 6-digit OTP">
+                    </div>
+                    <button class="btn" onclick="requestOTP()">Send OTP Code</button>
+                </div>
+
+                <!-- Phase 2: Verify OTP -->
+                <div id="forgotPhase2" class="hidden">
+                    <div class="form-grid">
+                        <div class="input-group">
+                            <label for="verifyEmail">Email</label>
+                            <input type="email" id="verifyEmail" readonly>
+                        </div>
+                        <div class="input-group">
+                            <label for="verifyOtpCode">6-Digit OTP</label>
+                            <input type="text" id="verifyOtpCode" placeholder="123456" maxlength="6">
+                        </div>
+                    </div>
+                    <button class="btn" onclick="verifyOTP()">Verify OTP</button>
+                </div>
+
+                <!-- Phase 3: Set New Password -->
+                <div id="forgotPhase3" class="hidden">
+                    <div class="input-group" style="margin-bottom: 1rem;">
+                        <label for="resetToken">Reset token (automatic)</label>
+                        <input type="text" id="resetToken" readonly>
+                    </div>
+                    <div class="form-grid">
+                        <div class="input-group">
+                            <label for="resetPassword">New Password</label>
+                            <input type="password" id="resetPassword" placeholder="Must have uppercase, length 8+, and symbol/digit">
+                        </div>
+                        <div class="input-group">
+                            <label for="resetConfirmPassword">Confirm New Password</label>
+                            <input type="password" id="resetConfirmPassword" placeholder="Confirm password">
+                        </div>
+                    </div>
+                    <button class="btn" onclick="resetPasswordSubmit()">Reset Password</button>
+                </div>
+            </div>
+
+            <!-- Dashboard tab -->
+            <div id="dashboardTab" class="tab-panel">
+                <h2>4. Dynamic Dashboard</h2>
+                <div style="margin-bottom: 1.5rem;">
+                    <button class="btn" onclick="fetchDashboard()">Fetch Dashboard Metrics</button>
+                </div>
+                
+                <div id="dashUI" class="dash-layout hidden">
+                    <!-- Today completion card -->
+                    <div class="dash-card" style="display: flex; flex-direction: column; justify-content: center;">
+                        <div class="completion-circle" id="dashCompletionBg">
+                            <div class="completion-text" id="dashCompletionVal">72%<span>Completed</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Metrics values card -->
+                    <div class="dash-card">
+                        <div class="metric-row">
+                            <div class="metric-label">🏋️ Workouts</div>
+                            <div class="metric-value" id="dashWorkoutsVal">11 / <span>15</span></div>
+                        </div>
+                        <div class="metric-row">
+                            <div class="metric-label">🔄 Total Reps</div>
+                            <div class="metric-value" id="dashRepsVal">1,245 / <span>1,800</span></div>
+                        </div>
+                        <div class="metric-row">
+                            <div class="metric-label">🔥 Calories Burned</div>
+                            <div class="metric-value" id="dashCaloriesVal">6,250 / <span>8,000</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Weekly Progress Graph card -->
+                    <div class="dash-card full-width">
+                        <label>Weekly Goal Completion Progress</label>
+                        <div class="chart-container" id="chartContainer">
+                            <!-- Loop days -->
+                            <div class="chart-bar-group">
+                                <div class="chart-bar-wrapper">
+                                    <div class="chart-value-bubble">20%</div>
+                                    <div class="chart-bar" style="height: 20%;"></div>
+                                </div>
+                                <div class="chart-label">Mon</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Next workout recomendation card -->
+                    <div class="dash-card full-width" style="border-left: 4px solid var(--primary-color);">
+                        <label style="color: var(--primary-color);">Next Scheduled Workout Recommendation</label>
+                        <h3 id="dashNextTitle" style="font-size: 1.25rem; margin: 0.5rem 0 0.25rem 0;">Upper Body Strength</h3>
+                        <p id="dashNextMeta" style="font-size: 0.9rem; color: var(--text-muted);">Tomorrow 7:00 PM | 45 min | Gym | Strength (Intermediate)</p>
+                    </div>
+                </div>
+                <div id="dashError" style="color: var(--error-color); text-align: center; margin-top: 1rem;">
+                    Sign in to retrieve actual metrics database logs.
+                </div>
+            </div>
+
+            <!-- Goals tab -->
+            <div id="goalsTab" class="tab-panel">
+                <h2>🎯 Personal Fitness Goals & Planner</h2>
+                
+                <!-- Screen 1: Create New Goal -->
+                <div id="goalsScreen1" class="wizard-screen">
+                    <p style="color:var(--text-muted); margin-bottom:1.5rem;">Tell us about yourself. Our AI will create a workout plan for you.</p>
+                    <div class="form-grid">
+                        <div class="input-group">
+                            <label for="goalAge">Age</label>
+                            <input type="number" id="goalAge" placeholder="e.g. 25" value="25">
+                        </div>
+                        <div class="input-group">
+                            <label for="goalGender">Gender</label>
+                            <select id="goalGender">
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="goalWeight">Weight</label>
+                            <div style="display:flex; gap:0.5rem;">
+                                <input type="number" id="goalWeight" placeholder="e.g. 70" value="70" style="flex:1;">
+                                <select id="goalWeightUnit" style="width:80px;">
+                                    <option value="kg">kg</option>
+                                    <option value="lbs">lbs</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label for="fitnessGoal">Fitness Goal</label>
+                            <select id="fitnessGoal">
+                                <option value="Weight Loss">Weight Loss</option>
+                                <option value="Muscle Gain">Muscle Gain</option>
+                                <option value="Endurance">Endurance & Stamina</option>
+                                <option value="General Health">General Health</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="activityLevel">Activity Level</label>
+                            <select id="activityLevel">
+                                <option value="Sedentary">Sedentary (desk job, little exercise)</option>
+                                <option value="Lightly Active">Lightly Active (light exercise 1-3 days/week)</option>
+                                <option value="Active">Active (moderate exercise 3-5 days/week)</option>
+                                <option value="Very Active">Very Active (hard exercise 6-7 days/week)</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="goalTimeline">Timeline</label>
+                            <select id="goalTimeline">
+                                <option value="8 Weeks">8 Weeks</option>
+                                <option value="12 Weeks">12 Weeks</option>
+                                <option value="16 Weeks">16 Weeks</option>
+                            </select>
+                        </div>
+                        <div class="input-group full-width">
+                            <label>Available Days</label>
+                            <div id="daySelectorPills" style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.5rem;">
+                                <span class="day-pill active" onclick="toggleDayPill(this)" data-day="Mon">Mon</span>
+                                <span class="day-pill" onclick="toggleDayPill(this)" data-day="Tue">Tue</span>
+                                <span class="day-pill active" onclick="toggleDayPill(this)" data-day="Wed">Wed</span>
+                                <span class="day-pill" onclick="toggleDayPill(this)" data-day="Thu">Thu</span>
+                                <span class="day-pill active" onclick="toggleDayPill(this)" data-day="Fri">Fri</span>
+                                <span class="day-pill" onclick="toggleDayPill(this)" data-day="Sat">Sat</span>
+                                <span class="day-pill" onclick="toggleDayPill(this)" data-day="Sun">Sun</span>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label for="goalAlarm">Alarm Sound</label>
+                            <select id="goalAlarm">
+                                <option value="Mission Alarm">Mission Alarm 🔔</option>
+                                <option value="Energetic Wake">Energetic Wake ⚡</option>
+                                <option value="Gentle Bells">Gentle Bells 🔔</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="goalTime">Available Time</label>
+                            <input type="time" id="goalTime" value="06:20">
+                        </div>
+                    </div>
+                    <div style="margin-top:2rem; display:flex; gap:1rem; margin-bottom:2rem;">
+                        <button class="btn" style="background:var(--primary-color); color:#000;" onclick="generateDraftPlan()">Generate Plan</button>
+                        <button class="btn btn-outline" onclick="loadActiveGoal()">Load Active Plan</button>
+                    </div>
+                </div>
+
+                <!-- Screen 2: Review AI Plan -->
+                <div id="goalsScreen2" class="wizard-screen hidden">
+                    <div class="review-header" style="background:rgba(255,255,255,0.02); border:1px solid var(--border-color); padding:1rem; border-radius:12px; margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <span style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Review AI Plan</span>
+                            <h3 id="reviewPlanTitle" style="color:var(--primary-color); margin:0.25rem 0 0 0;">Lean Muscle / Fat Loss</h3>
+                        </div>
+                        <div style="display:flex; gap:1.5rem;">
+                            <div style="text-align:center;">
+                                <span style="font-size:0.7rem; color:var(--text-muted); display:block;">DURATION</span>
+                                <strong id="reviewDurationVal" style="display:block; font-size:0.9rem;">8 Weeks</strong>
+                            </div>
+                            <div style="text-align:center;">
+                                <span style="font-size:0.7rem; color:var(--text-muted); display:block;">SCHEDULE</span>
+                                <strong id="reviewScheduleVal" style="display:block; font-size:0.9rem;">3 Days/Week</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="reviewDayTabs" style="display:flex; gap:0.5rem; border-bottom:1px solid var(--border-color); padding-bottom:0.75rem; margin-bottom:1rem; overflow-x:auto;">
+                        <!-- Injected day buttons -->
+                    </div>
+
+                    <div id="reviewExercisesList" style="display:flex; flex-direction:column; gap:0.75rem; margin-bottom:2rem;">
+                        <!-- Injected exercises for selected day -->
+                    </div>
+
+                    <div style="display:flex; gap:1rem; margin-bottom:2rem;">
+                        <button class="btn" style="background:var(--primary-color); color:#000;" onclick="saveAndActivatePlan()">✓ Save and Activate Plan</button>
+                        <button class="btn btn-outline" onclick="backToWizardScreen(1)">Back</button>
+                    </div>
+                </div>
+
+                <!-- Screen 3: Goal Created Successfully -->
+                <div id="goalsScreen3" class="wizard-screen hidden" style="text-align:center; padding:3rem 1.5rem;">
+                    <div style="font-size:4rem; margin-bottom:1rem;">🎯</div>
+                    <h2 style="color:var(--primary-color); margin-bottom:0.5rem;">Goal Created Successfully!</h2>
+                    <p style="color:var(--text-muted); max-width:400px; margin:0 auto 2rem auto;">Your personalized workout plan is active. You can create a meal plan for goal to fuel your progress.</p>
+                    <div style="display:flex; flex-direction:column; gap:1rem; align-items:center;">
+                        <button class="btn" style="background:var(--primary-color); color:#000; width:100%; max-width:300px;" onclick="createMealPlan()">🍎 Create Meal Plan</button>
+                        <button class="btn btn-outline" style="width:100%; max-width:300px;" onclick="skipMealPlan()">Skip</button>
+                    </div>
+                </div>
+
+                <div id="goalsHistorySection" class="hidden" style="margin-top: 2rem;">
+                    <h3 style="color:var(--text-color); margin-bottom:1rem;">📋 Your Fitness Goals History & Analytics</h3>
+                    <div id="goalsListContainer" style="display:flex; flex-direction:column; gap:1.5rem;">
+                        <!-- Injected goal cards -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Log workouts tab -->
+            <div id="workoutsTab" class="tab-panel">
+                <h2>5. Log Workout Activity</h2>
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label for="workExercise">Exercise Name</label>
+                        <input type="text" id="workExercise" value="pushup" placeholder="e.g. pushup, squat, lunges">
+                    </div>
+                    <div class="input-group">
+                        <label for="workReps">Reps Completed</label>
+                        <input type="number" id="workReps" value="15">
+                    </div>
+                    <div class="input-group">
+                        <label for="workCalories">Calories Burned (kcal)</label>
+                        <input type="number" id="workCalories" value="75">
+                    </div>
+                    <div class="input-group">
+                        <label for="workDuration">Duration (minutes)</label>
+                        <input type="number" id="workDuration" value="5">
+                    </div>
+                    <div class="input-group full-width">
+                        <label for="workBackdate">Backdate Workout (Optional)</label>
+                        <select id="workBackdate">
+                            <option value="0">Today (Default)</option>
+                            <option value="1">Yesterday</option>
+                            <option value="2">2 Days Ago</option>
+                            <option value="3">3 Days Ago</option>
+                            <option value="4">4 Days Ago</option>
+                            <option value="5">5 Days Ago</option>
+                            <option value="6">6 Days Ago</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn" onclick="submitWorkout()">Log Workout Activity</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logs Console -->
+    <div class="logs-container">
+        <div class="logs-header">
+            <h3>HTTP Request & Response Console</h3>
+            <button class="btn btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;" onclick="clearLogs()">Clear Console</button>
+        </div>
+        <div class="log-box" id="consoleLogs">Initialized integration tester client...</div>
+    </div>
+</div>
+
+<script>
+    let authToken = localStorage.getItem("fitvision_token") || null;
+    let resetFlowToken = null;
+
+    if (authToken) {
+        showTokenUI(authToken);
+    }
+
+    function switchTab(tabId) {
+        document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+        
+        document.getElementById(tabId).classList.add("active");
+        event.currentTarget.classList.add("active");
+    }
+
+    function log(message, type = "info") {
+        const timestamp = new Date().toLocaleTimeString();
+        let colorStr = "";
+        if (type === "error") colorStr = `color: var(--error-color);`;
+        if (type === "success") colorStr = `color: var(--success-color);`;
+        if (type === "info") colorStr = `color: var(--text-muted);`;
+
+        const consoleLogs = document.getElementById("consoleLogs");
+        consoleLogs.innerHTML += `\n[${timestamp}] <span style="${colorStr}">${message}</span>`;
+        consoleLogs.scrollTop = consoleLogs.scrollHeight;
+    }
+
+    function clearLogs() {
+        document.getElementById("consoleLogs").innerText = "Console cleared.";
+    }
+
+    function showTokenUI(token) {
+        document.getElementById("tokenContainer").classList.remove("hidden");
+        document.getElementById("tokenVal").innerText = token.substring(0, 15) + "...";
+    }
+
+    function saveToken(token) {
+        authToken = token;
+        localStorage.setItem("fitvision_token", token);
+        showTokenUI(token);
+    }
+
+    function clearToken() {
+        authToken = null;
+        localStorage.removeItem("fitvision_token");
+        document.getElementById("tokenContainer").classList.add("hidden");
+        log("Logged out successfully.", "info");
+    }
+
+    function getBaseUrl() {
+        return document.getElementById("apiUrl").value.trim();
+    }
+
+    // API Handlers
+    async function handleSignup() {
+        const email = document.getElementById("regEmail").value.trim();
+        const gender = document.getElementById("regGender").value;
+        const dob = document.getElementById("regDob").value;
+        const password = document.getElementById("regPassword").value;
+
+        if (!email || !password) {
+            alert("Email and Password are required!");
+            return;
+        }
+
+        const body = { email, password };
+        if (gender) body.gender = gender;
+        if (dob) body.date_of_birth = dob;
+
+        log(`Sending signup request for ${email} to /auth/signup...`);
+
+        try {
+            const res = await fetch(`${getBaseUrl()}/auth/signup`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body)
+            });
+            const data = await res.json();
+            if (res.ok) {
+                log("Signup successful! User Response:", "success");
+                log(JSON.stringify(data, null, 2), "success");
+            } else {
+                log("Signup failed. Error details:", "error");
+                log(JSON.stringify(data, null, 2), "error");
+            }
+        } catch (e) {
+            log("Error connecting to signup endpoint: " + e.message, "error");
+        }
+    }
+
+    async function handleLogin() {
+        const email = document.getElementById("regEmail").value.trim();
+        const password = document.getElementById("regPassword").value;
+
+        if (!email || !password) {
+            alert("Email and Password are required for login!");
+            return;
+        }
+
+        log(`Logging in ${email} at /auth/login (form URLencoded)...`);
+        
+        const formData = new URLSearchParams();
+        formData.append("email", email);
+        formData.append("password", password);
+
+        try {
+            const res = await fetch(`${getBaseUrl()}/auth/login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: formData
+            });
+            const data = await res.json();
+            if (res.ok) {
+                log("Login successful! JWT access token generated.", "success");
+                log(JSON.stringify(data, null, 2), "success");
+                saveToken(data.access_token);
+            } else {
+                log("Login failed. Check password/username details.", "error");
+                log(JSON.stringify(data, null, 2), "error");
+            }
+        } catch (e) {
+            log("Error connecting to login endpoint: " + e.message, "error");
+        }
+    }
+
+    // Google Sign-In Initialization
+    function initGoogleAuth() {
+        const clientId = document.getElementById("googleClientId").value.trim();
+        if (!clientId) {
+            alert("Please paste your Google OAuth Client ID first!");
+            return;
+        }
+
+        log("Initializing Google Identity Services SDK...");
+        try {
+            google.accounts.id.initialize({
+                client_id: clientId,
+                callback: handleGoogleLoginResponse
+            });
+
+            google.accounts.id.renderButton(
+                document.getElementById("googleBtnDiv"),
+                { theme: "dark", size: "large", text: "continue_with", width: "300px" }
+            );
+            log("Google Sign-In button rendered successfully. Click to authenticate.", "success");
+        } catch (e) {
+            log("Failed to initialize Google Login button: " + e.message, "error");
+        }
+    }
+
+    async function handleGoogleLoginResponse(response) {
+        log("Google ID credential token received.", "success");
+        const idToken = response.credential;
+
+        log("Verifying ID token at backend /auth/google...");
+        try {
+            const res = await fetch(`${getBaseUrl()}/auth/google`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id_token: idToken })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                log("Google Login/Signup successful! access_token returned.", "success");
+                log(JSON.stringify(data, null, 2), "success");
+                saveToken(data.access_token);
+            } else {
+                log("Google verification failed.", "error");
+                log(JSON.stringify(data, null, 2), "error");
+            }
+        } catch (e) {
+            log("Error verifying Google ID token: " + e.message, "error");
+        }
+    }
+
+    // Password reset handlers
+    async function requestOTP() {
+        const email = document.getElementById("forgotEmail").value.trim();
+        if (!email) {
+            alert("Email is required!");
+            return;
+        }
+
+        log(`Requesting password reset OTP for ${email}...`);
+        try {
+            const res = await fetch(`${getBaseUrl()}/auth/forgot-password`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email })
+            });
+            const data = await res.json();
+            log(JSON.stringify(data, null, 2));
+            
+            if (res.ok) {
+                log("OTP request processed successfully.", "success");
+                document.getElementById("verifyEmail").value = email;
+                document.getElementById("forgotPhase1").classList.add("hidden");
+                document.getElementById("forgotPhase2").classList.remove("hidden");
+            } else {
+                log("Failed to request OTP: " + data.detail, "error");
+            }
+        } catch (e) {
+            log("Error: " + e.message, "error");
+        }
+    }
+
+    async function verifyOTP() {
+        const email = document.getElementById("verifyEmail").value;
+        const otp = document.getElementById("verifyOtpCode").value.trim();
+
+        if (!otp) {
+            alert("Please enter the 6-digit OTP code!");
+            return;
+        }
+
+        log(`Verifying OTP code ${otp} for ${email}...`);
+        try {
+            const res = await fetch(`${getBaseUrl()}/auth/verify-otp`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, otp })
+            });
+            const data = await res.json();
+            log(JSON.stringify(data, null, 2));
+
+            if (res.ok) {
+                log("OTP verified successfully. Reset token obtained.", "success");
+                resetFlowToken = data.reset_token;
+                document.getElementById("resetToken").value = resetFlowToken;
+                document.getElementById("forgotPhase2").classList.add("hidden");
+                document.getElementById("forgotPhase3").classList.remove("hidden");
+            } else {
+                log("OTP verification failed: " + data.detail, "error");
+            }
+        } catch (e) {
+            log("Error: " + e.message, "error");
+        }
+    }
+
+    async function resetPasswordSubmit() {
+        const token = document.getElementById("resetToken").value;
+        const password = document.getElementById("resetPassword").value;
+        const confirm_password = document.getElementById("resetConfirmPassword").value;
+
+        if (!password || !confirm_password) {
+            alert("New Password fields are required!");
+            return;
+        }
+
+        log("Submitting password reset request to /auth/reset-password...");
+        try {
+            const res = await fetch(`${getBaseUrl()}/auth/reset-password`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ token, password, confirm_password })
+            });
+            const data = await res.json();
+            log(JSON.stringify(data, null, 2));
+
+            if (res.ok) {
+                log("Password reset successfully! You can now log in using the new password.", "success");
+                
+                // Return to phase 1
+                document.getElementById("forgotPhase3").classList.add("hidden");
+                document.getElementById("forgotPhase1").classList.remove("hidden");
+                document.getElementById("forgotEmail").value = "";
+                document.getElementById("verifyOtpCode").value = "";
+            } else {
+                log("Password reset failed. Ensure complexity rules are met.", "error");
+            }
+        } catch (e) {
+            log("Error resetting password: " + e.message, "error");
+        }
+    }
+
+    // Dashboard loader
+    async function fetchDashboard() {
+        if (!authToken) {
+            alert("You must be logged in to fetch dashboard metrics!");
+            return;
+        }
+
+        log("Fetching dashboard metrics at /auth/dashboard...");
+        try {
+            const res = await fetch(`${getBaseUrl()}/auth/dashboard`, {
+                method: "GET",
+                headers: { "Authorization": `Bearer ${authToken}` }
+            });
+            const data = await res.json();
+            
+            if (res.ok) {
+                log("Dashboard successfully fetched.", "success");
+                log(JSON.stringify(data, null, 2), "success");
+                
+                document.getElementById("dashError").classList.add("hidden");
+                document.getElementById("dashUI").classList.remove("hidden");
+
+                // Render metrics values
+                document.getElementById("dashCompletionVal").innerHTML = `${data.completion_percentage}%<span>Completed</span>`;
+                document.getElementById("dashCompletionBg").style.background = `conic-gradient(var(--primary-color) ${data.completion_percentage}%, rgba(255,255,255,0.05) ${data.completion_percentage}%)`;
+
+                document.getElementById("dashWorkoutsVal").innerHTML = `${data.goals.workouts.current} / <span>${data.goals.workouts.target}</span>`;
+                document.getElementById("dashRepsVal").innerHTML = `${data.goals.reps.current.toLocaleString()} / <span>${data.goals.reps.target.toLocaleString()}</span>`;
+                document.getElementById("dashCaloriesVal").innerHTML = `${data.goals.calories.current.toLocaleString()} / <span>${data.goals.calories.target.toLocaleString()}</span>`;
+
+                // Render next workout card
+                document.getElementById("dashNextTitle").innerText = data.next_workout.title;
+                document.getElementById("dashNextMeta").innerText = `${data.next_workout.time} | ${data.next_workout.duration} | ${data.next_workout.location} | ${data.next_workout.type} (${data.next_workout.difficulty})`;
+
+                // Render weekly progress chart
+                const chartContainer = document.getElementById("chartContainer");
+                chartContainer.innerHTML = "";
+                
+                data.weekly_progress.forEach(dayProgress => {
+                    chartContainer.innerHTML += `
+                        <div class="chart-bar-group">
+                            <div class="chart-bar-wrapper">
+                                <div class="chart-value-bubble">${dayProgress.percentage}%</div>
+                                <div class="chart-bar" style="height: ${dayProgress.percentage}%;"></div>
+                            </div>
+                            <div class="chart-label">${dayProgress.day}</div>
+                        </div>
+                    `;
+                });
+            } else {
+                log("Failed to fetch dashboard metrics.", "error");
+                log(JSON.stringify(data, null, 2), "error");
+            }
+        } catch (e) {
+            log("Error fetching dashboard details: " + e.message, "error");
+        }
+    }
+
+    // Log workout
+    async function submitWorkout() {
+        if (!authToken) {
+            alert("You must log in before registering workout logs!");
+            return;
+        }
+
+        const exercise_name = document.getElementById("workExercise").value.trim();
+        const reps = parseInt(document.getElementById("workReps").value);
+        const calories = parseInt(document.getElementById("workCalories").value);
+        const duration_minutes = parseInt(document.getElementById("workDuration").value);
+        const backdateDays = parseInt(document.getElementById("workBackdate").value);
+
+        if (!exercise_name || isNaN(reps) || isNaN(calories) || isNaN(duration_minutes)) {
+            alert("Please fill in valid exercise parameters!");
+            return;
+        }
+
+        let created_at = null;
+        if (backdateDays > 0) {
+            const dateObj = new Date();
+            dateObj.setDate(dateObj.getDate() - backdateDays);
+            created_at = dateObj.toISOString();
+        }
+
+        const body = { exercise_name, reps, calories, duration_minutes };
+        if (created_at) {
+            body.created_at = created_at;
+        }
+
+        log(`Logging workout activity (${exercise_name})...`);
+        try {
+            const res = await fetch(`${getBaseUrl()}/auth/workouts/log`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${authToken}`
+                },
+                body: JSON.stringify(body)
+            });
+            const data = await res.json();
+            log(JSON.stringify(data, null, 2));
+
+            if (res.ok) {
+                log("Workout logged successfully in db!", "success");
+                // Auto refresh if dashboard is visible
+                if (document.getElementById("dashboardTab").classList.contains("active")) {
+                    fetchDashboard();
+                }
+            } else {
+                log("Failed to log workout.", "error");
+            }
+        } catch (e) {
+            log("Error logging workout metrics: " + e.message, "error");
+        }
+    }
+
+    let draftGoal = null;
+
+    function toggleDayPill(element) {
+        element.classList.toggle("active");
+    }
+
+    function toggleWizardScreen(screenNumber) {
+        document.getElementById("goalsScreen1").classList.add("hidden");
+        document.getElementById("goalsScreen2").classList.add("hidden");
+        document.getElementById("goalsScreen3").classList.add("hidden");
+        
+        document.getElementById(`goalsScreen${screenNumber}`).classList.remove("hidden");
+    }
+
+    function backToWizardScreen(screenNumber) {
+        toggleWizardScreen(screenNumber);
+    }
+
+    async function generateDraftPlan() {
+        if (!authToken) {
+            alert("You must log in to configure goals and plans!");
+            return;
+        }
+
+        const age = parseInt(document.getElementById("goalAge").value);
+        const gender = document.getElementById("goalGender").value;
+        const weight = parseFloat(document.getElementById("goalWeight").value);
+        const weight_unit = document.getElementById("goalWeightUnit").value;
+        const fitness_goal = document.getElementById("fitnessGoal").value;
+        const activity_level = document.getElementById("activityLevel").value;
+        const timeline = document.getElementById("goalTimeline").value;
+        const alarm_sound = document.getElementById("goalAlarm").value;
+        const available_time = document.getElementById("goalTime").value;
+
+        const selectedDays = Array.from(document.querySelectorAll("#daySelectorPills .day-pill.active"))
+            .map(pill => pill.getAttribute("data-day"));
+
+        if (selectedDays.length === 0) {
+            alert("Please select at least one available day for your workouts!");
+            return;
+        }
+
+        const target_workouts = selectedDays.length;
+        const target_reps = target_workouts * 100;
+        const target_calories = target_workouts * 300;
+
+        log(`Generating draft AI fitness plan for ${fitness_goal}...`);
+
+        const payload = {
+            target_workouts,
+            target_reps,
+            target_calories,
+            fitness_goal,
+            activity_level,
+            age,
+            gender,
+            weight,
+            weight_unit,
+            timeline,
+            available_days: selectedDays,
+            alarm_sound,
+            available_time
+        };
+
+        try {
+            const res = await fetch(`${getBaseUrl()}/auth/goals`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${authToken}`
+                },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (res.ok) {
+                log("Draft AI plan successfully generated!", "success");
+                log(JSON.stringify(data, null, 2), "success");
+                
+                draftGoal = data;
+                
+                document.getElementById("reviewPlanTitle").innerText = `${data.fitness_goal} (${data.activity_level})`;
+                document.getElementById("reviewDurationVal").innerText = data.timeline || "8 Weeks";
+                document.getElementById("reviewScheduleVal").innerText = `${data.available_days.length} Days/Week`;
+
+                const dayTabsContainer = document.getElementById("reviewDayTabs");
+                dayTabsContainer.innerHTML = "";
+                
+                data.workout_plan.forEach((wp, idx) => {
+                    const activeClass = idx === 0 ? "active" : "";
+                    dayTabsContainer.innerHTML += `
+                        <span class="day-pill ${activeClass}" onclick="switchReviewDayTab('${wp.day}', this)">${wp.day}</span>
+                    `;
+                });
+
+                window.draftWorkoutPlan = data.workout_plan;
+
+                if (data.workout_plan.length > 0) {
+                    renderReviewExercises(data.workout_plan[0].day);
+                }
+
+                toggleWizardScreen(2);
+            } else {
+                log("Failed to generate plan: " + data.detail, "error");
+            }
+        } catch (e) {
+            log("Error generating plan: " + e.message, "error");
+        }
+    }
+
+    window.switchReviewDayTab = function(day, element) {
+        document.querySelectorAll("#reviewDayTabs .day-pill").forEach(p => p.classList.remove("active"));
+        element.classList.add("active");
+        renderReviewExercises(day);
+    }
+
+    function renderReviewExercises(day) {
+        const listContainer = document.getElementById("reviewExercisesList");
+        listContainer.innerHTML = "";
+        
+        const dayPlan = window.draftWorkoutPlan.find(wp => wp.day === day);
+        if (!dayPlan) return;
+
+        dayPlan.exercises.forEach(ex => {
+            listContainer.innerHTML += `
+                <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border-color); padding:1rem; border-radius:12px; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <h4 style="color:var(--text-color); margin:0;">${ex.name}</h4>
+                        <span style="font-size:0.8rem; color:var(--text-muted);">${ex.sets} sets × ${ex.reps_or_duration}</span>
+                    </div>
+                    <span style="background:rgba(255,183,3,0.1); border:1px solid var(--primary-color); color:var(--primary-color); font-size:0.75rem; padding:0.25rem 0.5rem; border-radius:6px; font-weight:600;">${ex.type}</span>
+                </div>
+            `;
+        });
+    }
+
+    async function saveAndActivatePlan() {
+        if (!draftGoal) return;
+        log(`Activating plan ID ${draftGoal.id}...`);
+        try {
+            const res = await fetch(`${getBaseUrl()}/auth/goals/${draftGoal.id}/activate`, {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${authToken}`
+                }
+            });
+            const data = await res.json();
+            if (res.ok) {
+                log("Goal plan activated successfully!", "success");
+                toggleWizardScreen(3);
+            } else {
+                log("Failed to activate plan: " + data.detail, "error");
+            }
+        } catch (e) {
+            log("Error activating plan: " + e.message, "error");
+        }
+    }
+
+    async function createMealPlan() {
+        if (!draftGoal) return;
+        log(`Generating meal plan for goal ID ${draftGoal.id}...`);
+        try {
+            const res = await fetch(`${getBaseUrl()}/auth/goals/${draftGoal.id}/meal-plan`, {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${authToken}`
+                }
+            });
+            const data = await res.json();
+            if (res.ok) {
+                log("Meal plan successfully generated and activated!", "success");
+                log(JSON.stringify(data, null, 2), "success");
+                
+                toggleWizardScreen(1);
+                loadActiveGoal();
+            } else {
+                log("Failed to generate meal plan: " + data.detail, "error");
+            }
+        } catch (e) {
+            log("Error generating meal plan: " + e.message, "error");
+        }
+    }
+
+    function skipMealPlan() {
+        toggleWizardScreen(1);
+        loadActiveGoal();
+    }
+
+    async function loadActiveGoal() {
+        if (!authToken) {
+            alert("You must log in to load active plans!");
+            return;
+        }
+        log("Fetching all user goals history and plans...");
+        try {
+            const res = await fetch(`${getBaseUrl()}/auth/goals`, {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${authToken}`
+                }
+            });
+            const data = await res.json();
+            if (res.ok) {
+                log("Goals history successfully loaded.", "success");
+                log(JSON.stringify(data, null, 2), "success");
+                
+                if (data.length > 0) {
+                    const latest = data[0];
+                    document.getElementById("goalAge").value = latest.age || 25;
+                    document.getElementById("goalGender").value = latest.gender || "Male";
+                    document.getElementById("goalWeight").value = latest.weight || 70;
+                    document.getElementById("goalWeightUnit").value = latest.weight_unit || "kg";
+                    document.getElementById("fitnessGoal").value = latest.fitness_goal;
+                    document.getElementById("activityLevel").value = latest.activity_level;
+                    document.getElementById("goalTimeline").value = latest.timeline || "8 Weeks";
+                    document.getElementById("goalAlarm").value = latest.alarm_sound || "Mission Alarm";
+                    document.getElementById("goalTime").value = latest.available_time || "06:20";
+                    
+                    const days = latest.available_days || [];
+                    document.querySelectorAll("#daySelectorPills .day-pill").forEach(pill => {
+                        const day = pill.getAttribute("data-day");
+                        if (days.includes(day)) {
+                            pill.classList.add("active");
+                        } else {
+                            pill.classList.remove("active");
+                        }
+                    });
+                }
+                
+                renderGoalsList(data);
+            } else {
+                log("Failed to load active plan: " + data.detail, "error");
+            }
+        } catch (e) {
+            log("Error loading active plans: " + e.message, "error");
+        }
+    }
+
+    function toggleGoalDetails(goalId) {
+        const detailsDiv = document.getElementById(`details-${goalId}`);
+        if (detailsDiv.classList.contains("hidden")) {
+            detailsDiv.classList.remove("hidden");
+        } else {
+            detailsDiv.classList.add("hidden");
+        }
+    }
+
+    function renderGoalsList(goals) {
+        document.getElementById("goalsHistorySection").classList.remove("hidden");
+        const container = document.getElementById("goalsListContainer");
+        container.innerHTML = "";
+
+        if (goals.length === 0) {
+            container.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:2rem;">No fitness goals created yet.</div>`;
+            return;
+        }
+
+        goals.forEach(goal => {
+            let workoutPlansHtml = "";
+            goal.workout_plan.forEach(item => {
+                const badges = item.exercises.map(ex => `<span style="background:rgba(255,255,255,0.05); border:1px solid var(--border-color); padding:0.25rem 0.6rem; border-radius:8px; font-size:0.8rem;">${ex}</span>`).join(" ");
+                workoutPlansHtml += `
+                    <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border-color); padding:0.8rem; border-radius:10px; display:flex; flex-direction:column; gap:0.4rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <strong style="color:var(--primary-color);">${item.day} - ${item.workout_name}</strong>
+                            <span style="font-size:0.75rem; color:var(--text-muted);">${item.duration_minutes} mins</span>
+                        </div>
+                        <div style="display:flex; flex-wrap:wrap; gap:0.4rem; margin-top:0.2rem;">
+                            ${badges}
+                        </div>
+                    </div>
+                `;
+            });
+
+            let mealSuggestionsHtml = "";
+            Object.entries(goal.nutrition_plan.meal_suggestions).forEach(([meal, suggestion]) => {
+                mealSuggestionsHtml += `
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.01); border:1px solid var(--border-color); padding:0.5rem 0.7rem; border-radius:8px; font-size:0.85rem;">
+                        <strong style="color:var(--success-color); text-transform:uppercase; font-size:0.7rem; width:90px;">${meal}</strong>
+                        <span style="flex:1; text-align:left; color:var(--text-color);">${suggestion}</span>
+                    </div>
+                `;
+            });
+
+            const creationDate = new Date(goal.created_at).toLocaleString();
+
+            container.innerHTML += `
+                <div class="dash-card full-width" style="border: 1px solid var(--border-color); background: rgba(255,255,255,0.02);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:1rem; margin-bottom:1rem; flex-wrap:wrap; gap:1rem;">
+                        <div>
+                            <h3 style="color:var(--primary-color); margin:0;">🎯 ${goal.fitness_goal} (${goal.activity_level})</h3>
+                            <span style="font-size:0.75rem; color:var(--text-muted);">Created: ${creationDate}</span>
+                        </div>
+                        <div style="text-align:right;">
+                            <span style="font-size:1.5rem; font-weight:700; color:var(--success-color);">${goal.progress.completion_percentage}%</span>
+                            <span style="display:block; font-size:0.75rem; color:var(--text-muted);">Weekly Completion</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Progress Bars Grid -->
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; margin-bottom:1rem;">
+                        <div>
+                            <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:0.25rem;">
+                                <span style="color:var(--text-muted);">Workouts</span>
+                                <span style="color:var(--text-color); font-weight:600;">${goal.progress.workouts.current} / ${goal.progress.workouts.target}</span>
+                            </div>
+                            <div style="height:6px; background:rgba(255,255,255,0.05); border-radius:3px; overflow:hidden;">
+                                <div style="height:100%; background:var(--primary-color); width:${Math.min((goal.progress.workouts.current/goal.progress.workouts.target)*100, 100)}%;"></div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:0.25rem;">
+                                <span style="color:var(--text-muted);">Reps</span>
+                                <span style="color:var(--text-color); font-weight:600;">${goal.progress.reps.current} / ${goal.progress.reps.target}</span>
+                            </div>
+                            <div style="height:6px; background:rgba(255,255,255,0.05); border-radius:3px; overflow:hidden;">
+                                <div style="height:100%; background:#ffb703; width:${Math.min((goal.progress.reps.current/goal.progress.reps.target)*100, 100)}%;"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:0.25rem;">
+                                <span style="color:var(--text-muted);">Calories</span>
+                                <span style="color:var(--text-color); font-weight:600;">${goal.progress.calories.current} / ${goal.progress.calories.target} kcal</span>
+                            </div>
+                            <div style="height:6px; background:rgba(255,255,255,0.05); border-radius:3px; overflow:hidden;">
+                                <div style="height:100%; background:#2ec4b6; width:${Math.min((goal.progress.calories.current/goal.progress.calories.target)*100, 100)}%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Button to View Details -->
+                    <div>
+                        <button class="btn btn-outline" style="padding:0.4rem 0.8rem; font-size:0.8rem;" onclick="toggleGoalDetails(${goal.id})">
+                            👁️ View Workout & Nutrition Plans
+                        </button>
+                    </div>
+
+                    <!-- Toggleable Plan details container -->
+                    <div id="details-${goal.id}" class="hidden" style="margin-top:1.5rem; border-top:1px dashed var(--border-color); padding-top:1rem; display:flex; flex-direction:column; gap:1.5rem;">
+                        
+                        <!-- Workout Plan -->
+                        <div>
+                            <h4 style="color: var(--primary-color); margin-bottom: 0.75rem;">🗓️ Workout Schedule</h4>
+                            <div style="display:flex; flex-direction:column; gap:0.75rem;">
+                                ${workoutPlansHtml}
+                            </div>
+                        </div>
+
+                        <!-- Nutrition Plan -->
+                        <div style="background:rgba(255,255,255,0.01); border:1px solid var(--border-color); padding:1rem; border-radius:12px;">
+                            <h4 style="color: var(--success-color); margin-bottom: 0.75rem;">🍎 Nutrition & Macros</h4>
+                            <p style="font-size:0.9rem; margin-bottom:0.5rem;"><strong>Daily Calories:</strong> ${goal.nutrition_plan.daily_calories} kcal</p>
+                            <p style="font-size:0.9rem; margin-bottom:0.75rem; color:var(--text-muted);">
+                                Protein: ${goal.nutrition_plan.macronutrients.protein_g}g | 
+                                Carbs: ${goal.nutrition_plan.macronutrients.carbs_g}g | 
+                                Fats: ${goal.nutrition_plan.macronutrients.fats_g}g
+                            </p>
+                            <div style="display:flex; flex-direction:column; gap:0.5rem;">
+                                ${mealSuggestionsHtml}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+</script>
+
+</body>
+</html>

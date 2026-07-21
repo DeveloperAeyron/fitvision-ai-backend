@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FitVision - Google Login Tester</title>
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <!-- Google Identity Services SDK -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <style>
+        :root {
+            --bg-color: #0b0c10;
+            --card-bg: rgba(22, 26, 35, 0.65);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --primary-color: #ffb703;
+            --primary-hover: #fb8500;
+            --text-color: #f8f9fa;
+            --text-muted: #8b9bb4;
+            --success-color: #2ec4b6;
+            --error-color: #e63946;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            background-image: radial-gradient(circle at 10% 20%, rgba(255, 183, 3, 0.05) 0%, transparent 40%),
+                              radial-gradient(circle at 90% 80%, rgba(251, 133, 0, 0.05) 0%, transparent 40%);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 650px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(16px);
+            border-radius: 24px;
+            padding: 2.5rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .logo-text {
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: var(--primary-color);
+            text-shadow: 0 0 10px rgba(255, 183, 3, 0.3);
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .section {
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .input-group {
+            margin-bottom: 1.25rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 0.8rem 1rem;
+            color: var(--text-color);
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 8px rgba(255, 183, 3, 0.2);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            background: var(--primary-color);
+            color: #000;
+            font-weight: 600;
+            font-size: 1rem;
+            border: none;
+            border-radius: 12px;
+            padding: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 183, 3, 0.25);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .google-btn-container {
+            display: flex;
+            justify-content: center;
+            margin: 1.5rem 0;
+            min-height: 40px;
+        }
+
+        .log-box {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.2rem;
+            font-family: monospace;
+            font-size: 0.85rem;
+            max-height: 250px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin-top: 1rem;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+        }
+
+        .status.idle { background: rgba(255, 255, 255, 0.1); color: var(--text-muted); }
+        .status.success { background: rgba(46, 196, 182, 0.15); color: var(--success-color); }
+        .status.error { background: rgba(230, 57, 70, 0.15); color: var(--error-color); }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="logo-text">FIT VISION</div>
+        <p>Google Authentication Integration Tester</p>
+    </header>
+
+    <!-- Configuration Section -->
+    <div class="section">
+        <div class="section-title">1. Configuration</div>
+        <div class="input-group">
+            <label for="clientId">Google Client ID</label>
+            <input type="text" id="clientId" placeholder="Enter your Google OAuth Client ID..." value="272845957801-lel0bj139oa9tic61f419du4fgpspc7c.apps.googleusercontent.com">
+            <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
+                Don't have one? Get it in the Google Cloud Console (Credentials screen).
+            </p>
+        </div>
+        <div class="input-group">
+            <label for="apiUrl">Backend API URL</label>
+            <input type="text" id="apiUrl" value="https://fitvision.medaide.org">
+        </div>
+        <button class="btn" id="saveBtn" onclick="initializeGoogleSignIn()">Initialize Google Sign-In</button>
+    </div>
+
+    <!-- Login Button Section -->
+    <div class="section hidden" id="loginSection">
+        <div class="section-title">2. Sign In With Google</div>
+        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem; text-align: center;">
+            Click the button below to sign in with your Google account.
+        </p>
+        <div class="google-btn-container">
+            <div id="googleBtn"></div>
+        </div>
+    </div>
+
+    <!-- Test Log Output Section -->
+    <div class="section">
+        <div class="section-title">3. Console & API Response Logs</div>
+        <div>
+            Status: <span id="statusIndicator" class="status idle">Not Initialized</span>
+        </div>
+        <div class="log-box" id="logBox">Logs will appear here...</div>
+    </div>
+</div>
+
+<script>
+    const logBox = document.getElementById("logBox");
+    const statusIndicator = document.getElementById("statusIndicator");
+
+    function log(message, type = "info") {
+        const timestamp = new Date().toLocaleTimeString();
+        let colorStr = "";
+        if (type === "error") colorStr = `color: var(--error-color);`;
+        if (type === "success") colorStr = `color: var(--success-color);`;
+
+        logBox.innerHTML += `\n[${timestamp}] <span style="${colorStr}">${message}</span>`;
+        logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    function updateStatus(statusText, type) {
+        statusIndicator.innerText = statusText.toUpperCase();
+        statusIndicator.className = `status ${type}`;
+    }
+
+    function initializeGoogleSignIn() {
+        const clientId = document.getElementById("clientId").value.trim();
+        
+        if (!clientId) {
+            alert("Please enter your Google Client ID!");
+            return;
+        }
+
+        log("Initializing Google Identity Services SDK...");
+        
+        try {
+            google.accounts.id.initialize({
+                client_id: clientId,
+                callback: handleCredentialResponse
+            });
+
+            google.accounts.id.renderButton(
+                document.getElementById("googleBtn"),
+                { theme: "dark", size: "large", width: "100%", text: "continue_with" }
+            );
+
+            document.getElementById("loginSection").classList.remove("hidden");
+            log("Google Sign-In rendered successfully.", "success");
+            updateStatus("Initialized", "success");
+        } catch (e) {
+            log("Error rendering Google button: " + e.message, "error");
+            updateStatus("Error", "error");
+        }
+    }
+
+    async function handleCredentialResponse(response) {
+        log("Google ID Token received successfully.", "success");
+        const idToken = response.credential;
+        log("ID Token (truncated): " + idToken.substring(0, 30) + "...");
+
+        const apiUrl = document.getElementById("apiUrl").value.trim() + "/auth/google";
+        log("Sending POST request to backend " + apiUrl + "...");
+
+        try {
+            const res = await fetch(apiUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ id_token: idToken })
+            });
+
+            const data = await res.json();
+            
+            if (res.ok) {
+                log("Backend verification succeeded!", "success");
+                log(JSON.stringify(data, null, 2), "success");
+                updateStatus("Authentication Successful", "success");
+            } else {
+                log("Backend verification failed (Status " + res.status + ").", "error");
+                log(JSON.stringify(data, null, 2), "error");
+                updateStatus("Verification Failed", "error");
+            }
+        } catch (e) {
+            log("Fetch Error: " + e.message, "error");
+            updateStatus("Fetch Error", "error");
+        }
+    }
+</script>
+
+</body>
+</html>

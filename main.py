@@ -10,11 +10,14 @@ load_dotenv()
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 
+from app.config import settings
 from api.routes import router as count_reps_router
 from api.auth_routes import router as auth_router
 from api.exercise_routes import router as exercise_router
 from api.dashboard_routes import router as dashboard_router
+from api.admin_routes import router as admin_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -118,10 +121,9 @@ def _log_startup():
             "Install with: brew install ffmpeg"
         )
 
-from fastapi.staticfiles import StaticFiles
 
-os.makedirs("uploads", exist_ok=True)
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+settings.uploads_dir.mkdir(exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=str(settings.uploads_dir)), name="uploads")
 
 app.add_middleware(
     CORSMiddleware,
@@ -134,21 +136,26 @@ app.include_router(count_reps_router)
 app.include_router(auth_router)
 app.include_router(exercise_router)
 app.include_router(dashboard_router)
+app.include_router(admin_router)
+
+
+def _read_static(filename: str) -> HTMLResponse:
+    path = settings.static_dir / filename
+    with open(path, encoding="utf-8") as f:
+        return HTMLResponse(content=f.read())
 
 
 @app.get("/tester", response_class=HTMLResponse)
 async def read_tester():
-    with open("app_test_client.html", "r", encoding="utf-8") as f:
-        return HTMLResponse(content=f.read())
+    return _read_static("app_test_client.html")
 
 
 @app.get("/admin", response_class=HTMLResponse)
 async def read_admin():
-    with open("admin_exercises.html", "r", encoding="utf-8") as f:
-        return HTMLResponse(content=f.read())
+    return _read_static("admin_exercises.html")
 
 
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("main:app", host="0.0.0.0", port=8003)
+    uvicorn.run("main:app", host=settings.host, port=settings.port)
