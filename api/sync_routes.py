@@ -88,8 +88,17 @@ def _model_mtime(slot: str) -> datetime | None:
     return datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc)
 
 
+def _to_utc_aware(dt: datetime | None) -> datetime | None:
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
+
+
 def _iso(dt: datetime | None) -> str | None:
-    return dt.isoformat() if dt else None
+    aware = _to_utc_aware(dt)
+    return aware.isoformat() if aware else None
 
 
 async def _exercises_mtime(db: AsyncSession) -> datetime | None:
@@ -114,7 +123,7 @@ async def build_sync_catalog(db: AsyncSession) -> dict:
             ts = _model_mtime(spec["model_slot"])
 
         if ts is not None:
-            all_times.append(ts)
+            all_times.append(_to_utc_aware(ts))
 
         entry = {
             "key": spec["key"],
