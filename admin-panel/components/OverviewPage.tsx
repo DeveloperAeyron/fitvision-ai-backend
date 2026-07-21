@@ -6,9 +6,11 @@ import {
   Plus, ShieldCheck, UploadSimple, WarningCircle,
 } from "@phosphor-icons/react";
 import {
-  fetchExercises, fetchModels, formatBytes, type ModelInfo,
+  fetchConfigList, fetchExercises, fetchModels, formatBytes,
+  type ConfigMeta, type ModelInfo,
 } from "@/lib/api";
 import { BACKEND_URL } from "@/lib/backend";
+import { formatDateTime } from "@/lib/format";
 
 const CONFIG_KEYS = [
   "goal-options",
@@ -35,6 +37,7 @@ type OverviewProps = {
 
 export default function OverviewPage({ toast, onNavigate }: OverviewProps) {
   const [models, setModels] = useState<ModelInfo[]>([]);
+  const [configs, setConfigs] = useState<ConfigMeta[]>([]);
   const [exerciseCount, setExerciseCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [backendOk, setBackendOk] = useState<boolean | null>(null);
@@ -45,12 +48,14 @@ export default function OverviewPage({ toast, onNavigate }: OverviewProps) {
     async function load() {
       setLoading(true);
       try {
-        const [modelResult, exercises] = await Promise.all([
+        const [modelResult, configResult, exercises] = await Promise.all([
           fetchModels(),
+          fetchConfigList(),
           fetchExercises().catch(() => null),
         ]);
         if (cancelled) return;
         setModels(modelResult.models);
+        setConfigs(configResult.configs);
         setExerciseCount(exercises?.length ?? null);
         setBackendOk(exercises !== null);
       } catch {
@@ -158,8 +163,8 @@ export default function OverviewPage({ toast, onNavigate }: OverviewProps) {
                       <strong>{item?.filename ?? "—"}</strong>
                     </div>
                     <div className="model-stat">
-                      <span>Size</span>
-                      <strong>{item?.size_bytes ? formatBytes(item.size_bytes) : "Missing"}</strong>
+                      <span>Modified</span>
+                      <strong>{formatDateTime(item?.lastModifiedAt)}</strong>
                     </div>
                     <span className={`pill ${deployed ? "live" : "draft"}`}>
                       <i />{deployed ? "Deployed" : "Missing"}
@@ -187,7 +192,13 @@ export default function OverviewPage({ toast, onNavigate }: OverviewProps) {
             <StatusRow
               ok
               title="Meal plan configs"
-              meta={`${CONFIG_KEYS.length} JSON files editable locally`}
+              meta={`${configs.length || CONFIG_KEYS.length} JSON files · latest ${formatDateTime(
+                configs.reduce<string | null>((latest, cfg) => {
+                  if (!cfg.lastModifiedAt) return latest;
+                  if (!latest || cfg.lastModifiedAt > latest) return cfg.lastModifiedAt;
+                  return latest;
+                }, null),
+              )}`}
             />
           </div>
           <div className="overview-endpoints">

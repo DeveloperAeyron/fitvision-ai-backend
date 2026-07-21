@@ -31,15 +31,34 @@ async function localFetch<T>(path: string, options: RequestInit = {}): Promise<T
   return response.json() as Promise<T>;
 }
 
+export type ConfigResponse = {
+  data: Record<string, unknown>;
+  lastModifiedAt: string | null;
+};
+
+export type ConfigMeta = {
+  key: string;
+  filename: string;
+  size_bytes: number;
+  lastModifiedAt: string | null;
+};
+
 export async function fetchConfig(configKey: string) {
-  return localFetch<Record<string, unknown>>(`/api/config/${configKey}`);
+  return localFetch<ConfigResponse>(`/api/config/${configKey}`);
 }
 
 export async function saveConfig(configKey: string, data: Record<string, unknown>) {
-  return localFetch<{ message: string }>(`/api/config/${configKey}`, {
-    method: "PUT",
-    body: JSON.stringify({ data }),
-  });
+  return localFetch<{ message: string; key: string; lastModifiedAt: string | null }>(
+    `/api/config/${configKey}`,
+    {
+      method: "PUT",
+      body: JSON.stringify({ data }),
+    },
+  );
+}
+
+export async function fetchConfigList() {
+  return localFetch<{ configs: ConfigMeta[] }>("/api/config");
 }
 
 export async function uploadConfigFile(configKey: string, file: File) {
@@ -54,7 +73,7 @@ export async function uploadConfigFile(configKey: string, file: File) {
     const body = await response.json().catch(() => ({}));
     throw new Error(body.detail ?? "Upload failed");
   }
-  return response.json() as Promise<{ message: string; filename: string }>;
+  return response.json() as Promise<{ message: string; filename: string; lastModifiedAt: string | null }>;
 }
 
 export function downloadConfigJson(filename: string, data: Record<string, unknown>) {
@@ -87,6 +106,7 @@ export type ModelInfo = {
   filename: string;
   size_bytes: number;
   updated_at: number | null;
+  lastModifiedAt: string | null;
 };
 
 export async function fetchModels() {
@@ -142,6 +162,8 @@ export type Exercise = {
   suggested_workouts?: string[];
   instructions?: string[];
   safety_tips?: string[];
+  created_at?: string;
+  lastModifiedAt?: string | null;
 };
 
 export type ExerciseInput = Omit<Exercise, "id">;

@@ -1,6 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { NextRequest } from "next/server";
-import { configPath, verifyAdminKey } from "@/lib/repo-paths";
+import { CONFIG_FILES, configPath, verifyAdminKey } from "@/lib/repo-paths";
+import { fileLastModifiedIso } from "@/lib/format";
 
 export const runtime = "nodejs";
 
@@ -16,7 +17,11 @@ export async function GET(
 
   try {
     const raw = await readFile(filePath, "utf-8");
-    return Response.json(JSON.parse(raw));
+    const lastModifiedAt = await fileLastModifiedIso(filePath);
+    return Response.json({
+      data: JSON.parse(raw),
+      lastModifiedAt,
+    });
   } catch {
     return Response.json({ detail: "Config file not found" }, { status: 404 });
   }
@@ -45,7 +50,9 @@ export async function PUT(
 
     const formatted = `${JSON.stringify(data, null, 2)}\n`;
     await writeFile(filePath, formatted, "utf-8");
-    return Response.json({ message: "Config saved", key });
+    const lastModifiedAt = await fileLastModifiedIso(filePath);
+
+    return Response.json({ message: "Config saved", key, lastModifiedAt });
   } catch (err) {
     const detail = err instanceof Error ? err.message : "Save failed";
     return Response.json({ detail }, { status: 500 });

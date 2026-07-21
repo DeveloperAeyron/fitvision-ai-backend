@@ -50,7 +50,8 @@ def to_exercise_response(model: Exercise) -> ExerciseResponse:
         suggested_workouts=workouts,
         instructions=instructions_list,
         safety_tips=tips_list,
-        created_at=model.created_at
+        created_at=model.created_at,
+        lastModifiedAt=model.updated_at,
     )
 
 

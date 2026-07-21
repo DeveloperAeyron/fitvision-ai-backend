@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -84,7 +85,25 @@ def get_config(config_key: str) -> dict[str, Any]:
     return _load_json(filename)
 
 
-def save_config(config_key: str, data: dict[str, Any]) -> None:
+def get_config_mtime(config_key: str) -> datetime | None:
+    filename = CONFIG_FILES.get(config_key)
+    if not filename:
+        raise KeyError(f"Unknown config key: {config_key}")
+    path = DATA_DIR / filename
+    if not path.exists():
+        return None
+    return datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc)
+
+
+def get_config_with_meta(config_key: str) -> dict[str, Any]:
+    mtime = get_config_mtime(config_key)
+    return {
+        "data": get_config(config_key),
+        "lastModifiedAt": mtime.isoformat() if mtime else None,
+    }
+
+
+def save_config(config_key: str, data: dict[str, Any]) -> datetime:
     filename = CONFIG_FILES.get(config_key)
     if not filename:
         raise KeyError(f"Unknown config key: {config_key}")
@@ -96,13 +115,20 @@ def save_config(config_key: str, data: dict[str, Any]) -> None:
         f.write("\n")
     tmp.replace(path)
     clear_config_cache()
+    mtime = get_config_mtime(config_key)
+    return mtime or datetime.now(timezone.utc)
 
 
-def list_config_keys() -> list[dict[str, str]]:
-    return [
-        {"key": key, "filename": filename}
-        for key, filename in CONFIG_FILES.items()
-    ]
+def list_config_keys() -> list[dict[str, str | None]]:
+    items: list[dict[str, str | None]] = []
+    for key, filename in CONFIG_FILES.items():
+        mtime = get_config_mtime(key)
+        items.append({
+            "key": key,
+            "filename": filename,
+            "lastModifiedAt": mtime.isoformat() if mtime else None,
+        })
+    return items
 
 
 def resolve_goal_category(fitness_goal: str) -> str:

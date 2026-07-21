@@ -5,6 +5,7 @@ import { FloppyDisk, PencilSimple, Plus, Trash } from "@phosphor-icons/react";
 import {
   createExercise, deleteExercise, fetchExercises, updateExercise, type Exercise,
 } from "@/lib/api";
+import { formatDateTime } from "@/lib/format";
 
 const EMPTY_FORM = {
   title: "",
@@ -174,6 +175,7 @@ export default function ExercisesPage({ toast }: { toast: (message: string) => v
                     <th>Muscle</th>
                     <th>Type</th>
                     <th>Equipment</th>
+                    <th>Last modified</th>
                     <th />
                   </tr>
                 </thead>
@@ -184,6 +186,7 @@ export default function ExercisesPage({ toast }: { toast: (message: string) => v
                       <td>{exercise.primary_muscle}</td>
                       <td>{exercise.exercise_type}</td>
                       <td>{exercise.equipment_required ?? "None"}</td>
+                      <td>{formatDateTime(exercise.lastModifiedAt ?? exercise.created_at)}</td>
                       <td className="exercise-actions">
                         <button type="button" onClick={() => startEdit(exercise)}><PencilSimple /></button>
                         <button type="button" onClick={() => handleDelete(exercise)}><Trash /></button>

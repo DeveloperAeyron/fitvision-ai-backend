@@ -1,6 +1,7 @@
 import { stat } from "node:fs/promises";
 import path from "node:path";
 import { MODEL_SLOTS, REPO_ROOT } from "@/lib/repo-paths";
+import { fileLastModifiedIso } from "@/lib/format";
 
 export const runtime = "nodejs";
 
@@ -10,12 +11,14 @@ export async function GET() {
       const fullPath = path.join(REPO_ROOT, meta.path);
       try {
         const info = await stat(fullPath);
+        const lastModifiedAt = await fileLastModifiedIso(fullPath);
         return {
           slot,
           label: meta.label,
           filename: meta.filename,
           size_bytes: info.size,
           updated_at: info.mtimeMs,
+          lastModifiedAt,
         };
       } catch {
         return {
@@ -24,6 +27,7 @@ export async function GET() {
           filename: meta.filename,
           size_bytes: 0,
           updated_at: null,
+          lastModifiedAt: null,
         };
       }
     }),

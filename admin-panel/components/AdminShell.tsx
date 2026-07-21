@@ -14,6 +14,7 @@ import {
   downloadModel, fetchModels, formatBytes, uploadModel,
   type ModelInfo,
 } from "@/lib/api";
+import { formatDateTime } from "@/lib/format";
 
 const nav = [
   ["Overview", SquaresFour],
@@ -138,7 +139,7 @@ function ModelsPage({ toast }: { toast: (s: string) => void }) {
           const item = modelMap[modelSlot];
           return <article className="artifact-row model-slot" key={modelSlot}>
             <div className="slot-heading"><span className="slot-name">{SLOT_LABELS[modelSlot]}</span><span className={`pill ${item?.size_bytes ? "live" : "draft"}`}><i/>{item?.size_bytes ? "Deployed" : "Missing"}</span></div>
-            <div className="artifact-top"><div className={`model-icon m${index + 1}`}><Brain weight="fill"/></div><div><strong>{item?.label ?? SLOT_LABELS[modelSlot]}</strong><span>{item?.filename ?? "No file"} · {item?.size_bytes ? formatBytes(item.size_bytes) : "—"}</span></div>
+            <div className="artifact-top"><div className={`model-icon m${index + 1}`}><Brain weight="fill"/></div><div><strong>{item?.label ?? SLOT_LABELS[modelSlot]}</strong><span>{item?.filename ?? "No file"} · {item?.size_bytes ? formatBytes(item.size_bytes) : "—"}{item?.lastModifiedAt ? ` · ${formatDateTime(item.lastModifiedAt)}` : ""}</span></div>
               {item?.size_bytes ? <button type="button" className="download-btn" onClick={async () => {
                 try {
                   await downloadModel(modelSlot, item.filename);

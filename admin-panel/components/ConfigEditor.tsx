@@ -7,6 +7,7 @@ import {
 import {
   downloadConfigJson, fetchConfig, saveConfig, uploadConfigFile,
 } from "@/lib/api";
+import { formatDateTime } from "@/lib/format";
 
 const DOWNLOAD_NAMES: Record<string, string> = {
   "goal-options": "goal_options.json",
@@ -37,15 +38,17 @@ export default function ConfigEditor({
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+  const [lastModifiedAt, setLastModifiedAt] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      const data = await fetchConfig(configKey);
-      const formatted = JSON.stringify(data, null, 2);
+      const response = await fetchConfig(configKey);
+      const formatted = JSON.stringify(response.data, null, 2);
       setText(formatted);
       setSavedText(formatted);
+      setLastModifiedAt(response.lastModifiedAt);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load config");
     } finally {
@@ -70,10 +73,11 @@ export default function ConfigEditor({
     setError("");
     try {
       const data = parseJson();
-      await saveConfig(configKey, data);
+      const result = await saveConfig(configKey, data);
       const formatted = JSON.stringify(data, null, 2);
       setText(formatted);
       setSavedText(formatted);
+      setLastModifiedAt(result.lastModifiedAt);
       toast(`${title} saved`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed");
@@ -135,6 +139,9 @@ export default function ConfigEditor({
           <p>{subtitle}</p>
         </div>
         <div className="config-actions">
+          {lastModifiedAt && (
+            <span className="config-modified">Last modified {formatDateTime(lastModifiedAt)}</span>
+          )}
           <button className="secondary" type="button" onClick={load} disabled={loading || uploading}>
             <ArrowCounterClockwise /> Reload
           </button>

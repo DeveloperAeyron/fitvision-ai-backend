@@ -5,6 +5,7 @@ import { pipeline } from "node:stream/promises";
 import { Readable } from "node:stream";
 import { NextRequest } from "next/server";
 import { MODEL_SLOTS, REPO_ROOT, verifyAdminKey } from "@/lib/repo-paths";
+import { fileLastModifiedIso } from "@/lib/format";
 
 export const runtime = "nodejs";
 
@@ -41,6 +42,7 @@ export async function POST(
       slot,
       filename: meta.filename,
       size_bytes: info.size,
+      lastModifiedAt: await fileLastModifiedIso(dest),
     });
   } catch (err) {
     const detail = err instanceof Error ? err.message : "Upload failed";

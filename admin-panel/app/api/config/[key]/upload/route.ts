@@ -1,6 +1,7 @@
 import { writeFile } from "node:fs/promises";
 import { NextRequest } from "next/server";
 import { configPath, verifyAdminKey } from "@/lib/repo-paths";
+import { fileLastModifiedIso } from "@/lib/format";
 
 export const runtime = "nodejs";
 
@@ -39,11 +40,13 @@ export async function POST(
 
     const formatted = `${JSON.stringify(parsed, null, 2)}\n`;
     await writeFile(filePath, formatted, "utf-8");
+    const lastModifiedAt = await fileLastModifiedIso(filePath);
 
     return Response.json({
       message: "Config replaced from upload",
       key,
       filename: file instanceof File ? file.name : "upload.json",
+      lastModifiedAt,
     });
   } catch (err) {
     const detail = err instanceof Error ? err.message : "Upload failed";

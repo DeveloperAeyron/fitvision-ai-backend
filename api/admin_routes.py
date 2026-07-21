@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import shutil
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -22,6 +23,7 @@ from api.plan_config import (
     build_nutrition_plan,
     clear_config_cache,
     get_config,
+    get_config_with_meta,
     list_config_keys,
     save_config,
 )
@@ -53,7 +55,7 @@ async def list_configs(_: None = Depends(verify_admin_key)):
 async def read_config(config_key: str, _: None = Depends(verify_admin_key)):
     if config_key not in CONFIG_FILES:
         raise HTTPException(status_code=404, detail="Unknown config")
-    return get_config(config_key)
+    return get_config_with_meta(config_key)
 
 
 @router.put("/config/{config_key}")
@@ -66,8 +68,12 @@ async def update_config(
         raise HTTPException(status_code=404, detail="Unknown config")
     if not isinstance(body.data, dict):
         raise HTTPException(status_code=400, detail="Config body must be a JSON object")
-    save_config(config_key, body.data)
-    return {"message": "Config saved", "key": config_key}
+    saved_at = save_config(config_key, body.data)
+    return {
+        "message": "Config saved",
+        "key": config_key,
+        "lastModifiedAt": saved_at.isoformat(),
+    }
 
 
 @router.post("/config/reload")
@@ -96,12 +102,14 @@ async def list_models(_: None = Depends(verify_admin_key)):
         path = ROOT_DIR / meta["path"]
         if path.exists():
             stat = path.stat()
+            mtime = datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc)
             items.append({
                 "slot": slot,
                 "label": meta["label"],
                 "filename": meta["filename"],
                 "size_bytes": stat.st_size,
                 "updated_at": stat.st_mtime,
+                "lastModifiedAt": mtime.isoformat(),
             })
         else:
             items.append({
@@ -110,6 +118,7 @@ async def list_models(_: None = Depends(verify_admin_key)):
                 "filename": meta["filename"],
                 "size_bytes": 0,
                 "updated_at": None,
+                "lastModifiedAt": None,
             })
     return {"models": items}
 
@@ -138,11 +147,13 @@ async def upload_model(
         raise HTTPException(status_code=500, detail=f"Upload failed: {exc}") from exc
 
     stat = dest.stat()
+    mtime = datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc)
     return {
         "message": "Model uploaded",
         "slot": slot,
         "filename": meta["filename"],
         "size_bytes": stat.st_size,
+        "lastModifiedAt": mtime.isoformat(),
     }
 
 
@@ -243,6 +254,7 @@ async def admin_update_exercise(
     exercise.suggested_workouts = serialized["suggested_workouts"]
     exercise.instructions = serialized["instructions"]
     exercise.safety_tips = serialized["safety_tips"]
+    exercise.updated_at = datetime.utcnow()
 
     await db.commit()
     await db.refresh(exercise)
