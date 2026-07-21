@@ -3,6 +3,8 @@ __pycache__/
 .virtual_documents/
 uploads/
 outputs/
+*.mp4
+raw_videos/
 *.json
 .venv
 fitvisionvenv/
