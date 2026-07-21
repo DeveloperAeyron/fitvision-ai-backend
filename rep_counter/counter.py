@@ -1,9 +1,12 @@
 import os
 import pickle
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
+
+import numpy as np
 
 from .angles import calculate_angle
 from .exercises import get_exercise
+from .tcn import TCNRepTracker
 
 
 class RepCounter:
@@ -28,7 +31,10 @@ class RepCounter:
         self.pred_history: List[str] = []
         self.frames_since_last_rep = 99
 
-        # Load ML pose classifier model if it exists
+        self.tcn_tracker = TCNRepTracker(self.config.name)
+        self.tcn_enabled = self.tcn_tracker.enabled
+
+        # Legacy per-exercise sklearn classifier (used when TCN unavailable).
         self.model_loaded = False
         model_name = f"pose_classifier_{self.config.name}.pkl"
         model_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "weights", model_name)
@@ -211,8 +217,15 @@ class RepCounter:
 
         return [all_feats[f] for f in self.clf_features]
 
-    def update(self, landmarks: Dict[str, Tuple[float, float, float]],
+    def update(self, landmarks: Union[np.ndarray, Dict[str, Tuple[float, float, float]]],
                frame_height: Optional[int] = None) -> int:
+        if isinstance(landmarks, np.ndarray):
+            if self.tcn_enabled:
+                self.rep_count = self.tcn_tracker.update(landmarks)
+                self.current_state = self.tcn_tracker.current_state
+                return self.rep_count
+            landmarks = self._dict_from_array(landmarks)
+
         if not self._is_pose_valid(landmarks):
             return self.rep_count
 
@@ -296,3 +309,15 @@ class RepCounter:
 
         self.previous_state = self.current_state
         return self.rep_count
+
+    @staticmethod
+    def _dict_from_array(landmarks: np.ndarray) -> Dict[str, Tuple[float, float, float]]:
+        from pose.skeleton import LANDMARK_NAMES
+
+        result: Dict[str, Tuple[float, float, float]] = {}
+        for i, name in enumerate(LANDMARK_NAMES):
+            if i >= len(landmarks):
+                break
+            x, y, _z, vis = landmarks[i]
+            result[name] = (float(x), float(y), float(vis))
+        return result

@@ -16,8 +16,8 @@ CONFIG_FILES: dict[str, str] = {
 
 MODEL_SLOTS: dict[str, dict[str, str]] = {
     "exercise-rep": {
-        "path": "weights/exercise_rep_tcn.keras",
-        "filename": "exercise_rep_tcn.keras",
+        "path": "weights/TCN-exercise.pt",
+        "filename": "TCN-exercise.pt",
         "label": "Exercise Rep (TCN)",
     },
     "equipment": {

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import cv2
 
-from pose.skeleton import landmarks_to_dict
 from rep_counter.counter import RepCounter
 from video.annotator import annotate_frame
 from video.processor import ProcessResult
@@ -40,7 +39,7 @@ class MediaPipeVideoProcessor:
 
                 landmarks = landmarker.estimate(frame, timestamp_ms)
                 if landmarks is not None:
-                    counter.update(landmarks_to_dict(landmarks), frame_height=height)
+                    counter.update(landmarks, frame_height=height)
 
                 annotate_frame(frame, landmarks, counter.rep_count,
                                exercise, counter.last_angle)

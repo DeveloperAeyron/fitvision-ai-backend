@@ -14,6 +14,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
 from api.routes import router as count_reps_router
+from api.equipment_routes import router as equipment_router
 from api.auth_routes import router as auth_router
 from api.exercise_routes import router as exercise_router
 from api.dashboard_routes import router as dashboard_router
@@ -111,6 +112,20 @@ async def create_db_tables():
 
 
 @app.on_event("startup")
+def _preload_ml_models():
+    from rep_counter.tcn import load_tcn_model
+    from cv.equipment import get_equipment_detector
+
+    tcn = load_tcn_model()
+    equipment = get_equipment_detector()
+    logging.getLogger(__name__).info(
+        "ML models: tcn=%s equipment=%s",
+        "ready" if tcn is not None else "unavailable",
+        "ready" if equipment.ready else "unavailable",
+    )
+
+
+@app.on_event("startup")
 def _log_startup():
     ffmpeg = shutil.which("ffmpeg")
     if ffmpeg:
@@ -133,6 +148,7 @@ app.add_middleware(
 )
 
 app.include_router(count_reps_router)
+app.include_router(equipment_router)
 app.include_router(auth_router)
 app.include_router(exercise_router)
 app.include_router(dashboard_router)

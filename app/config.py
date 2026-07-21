@@ -21,6 +21,10 @@ class Settings:
     mediapipe_task_path: str = os.getenv(
         "MEDIAPIPE_TASK_PATH", "weights/pose_landmarker_custom.task"
     )
+    tcn_model_path: str = os.getenv("TCN_MODEL_PATH", "weights/TCN-exercise.pt")
+    equipment_model_path: str = os.getenv(
+        "EQUIPMENT_MODEL_PATH", "weights/Equipment-detection.pt"
+    )
 
     uploads_dir: Path = ROOT_DIR / "uploads"
     static_dir: Path = ROOT_DIR / "static"

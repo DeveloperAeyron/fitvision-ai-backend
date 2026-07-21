@@ -13,8 +13,8 @@ export const CONFIG_FILES: Record<string, string> = {
 
 export const MODEL_SLOTS: Record<string, { path: string; filename: string; label: string }> = {
   "exercise-rep": {
-    path: path.join("weights", "exercise_rep_tcn.keras"),
-    filename: "exercise_rep_tcn.keras",
+    path: path.join("weights", "TCN-exercise.pt"),
+    filename: "TCN-exercise.pt",
     label: "Exercise Rep (TCN)",
   },
   equipment: {

@@ -9,7 +9,6 @@ import numpy as np
 from pose.detector import PersonDetector
 from pose.landmark import PoseLandmarker
 from pose.roi import ROI, roi_from_landmarks
-from pose.skeleton import landmarks_to_dict
 from pose.smoothing import LandmarkSmoother
 from rep_counter.counter import RepCounter
 from .annotator import annotate_frame
@@ -68,7 +67,7 @@ class VideoProcessor:
 
                 if landmarks is not None:
                     landmarks = smoother.apply(landmarks)
-                    counter.update(landmarks_to_dict(landmarks), frame_height=height)
+                    counter.update(landmarks, frame_height=height)
                     roi = self._next_roi(landmarks)
                 else:
                     roi = None
