@@ -5,7 +5,7 @@ import { pipeline } from "node:stream/promises";
 import { Readable } from "node:stream";
 import { NextRequest } from "next/server";
 import { MODEL_SLOTS, REPO_ROOT, verifyAdminKey } from "@/lib/repo-paths";
-import { fileLastModifiedIso } from "@/lib/format";
+import { fileLastModifiedIso } from "@/lib/format-server";
 
 export const runtime = "nodejs";
 

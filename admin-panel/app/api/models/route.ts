@@ -1,7 +1,7 @@
 import { stat } from "node:fs/promises";
 import path from "node:path";
 import { MODEL_SLOTS, REPO_ROOT } from "@/lib/repo-paths";
-import { fileLastModifiedIso } from "@/lib/format";
+import { fileLastModifiedIso } from "@/lib/format-server";
 
 export const runtime = "nodejs";
 
