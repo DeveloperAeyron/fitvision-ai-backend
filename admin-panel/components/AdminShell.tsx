@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import {
-  ArrowRight, Barbell, Bell, Brain, Check, DownloadSimple, FileArrowUp, ForkKnife, Key,
+  ArrowRight, Barbell, Bell, Brain, Check, DownloadSimple, FileArrowUp, ForkKnife,
   ListChecks, MagnifyingGlass, ShieldCheck, SidebarSimple, Sparkle, SquaresFour,
   UploadSimple, X,
 } from "@phosphor-icons/react";
@@ -11,7 +11,7 @@ import MealPlansPage from "@/components/MealPlansPage";
 import MealsPage from "@/components/MealsPage";
 import OverviewPage from "@/components/OverviewPage";
 import {
-  downloadModel, fetchModels, formatBytes, getAdminKey, setAdminKey, uploadModel,
+  downloadModel, fetchModels, formatBytes, uploadModel,
   type ModelInfo,
 } from "@/lib/api";
 
@@ -27,20 +27,10 @@ export default function AdminShell() {
   const [active, setActive] = useState("Overview");
   const [sidebar, setSidebar] = useState(false);
   const [notice, setNotice] = useState("");
-  const [adminKey, setAdminKeyState] = useState("");
-
-  useEffect(() => {
-    setAdminKeyState(getAdminKey());
-  }, []);
 
   const toast = (message: string) => {
     setNotice(message);
     window.setTimeout(() => setNotice(""), 2600);
-  };
-
-  const saveKey = () => {
-    setAdminKey(adminKey);
-    toast("Admin API key saved");
   };
 
   const renderPage = () => {
@@ -48,7 +38,7 @@ export default function AdminShell() {
       return <OverviewPage toast={toast} onNavigate={setActive} />;
     }
     if (active === "Exercises") return <ExercisesPage toast={toast} />;
-    if (active === "Models") return <ModelsPage toast={toast} adminKey={adminKey} />;
+    if (active === "Models") return <ModelsPage toast={toast} />;
     if (active === "Meals") return <MealsPage toast={toast} />;
     if (active === "Meal plans") return <MealPlansPage toast={toast} />;
     return null;
@@ -62,17 +52,6 @@ export default function AdminShell() {
         <p className="nav-label">Workspace</p>
         <nav>{nav.map(([label, Icon]) => <button key={label} className={active === label ? "active" : ""} onClick={() => {setActive(label); setSidebar(false)}}><Icon weight={active === label ? "fill" : "regular"}/><span>{label}</span></button>)}</nav>
         <div className="sidebar-foot">
-          <div className="admin-key-box">
-            <label><Key weight="fill" /><span>Admin API key</span></label>
-            <input
-              type="password"
-              value={adminKey}
-              onChange={(e) => setAdminKeyState(e.target.value)}
-              placeholder="fitvision-admin-dev"
-            />
-            <button type="button" onClick={saveKey}>Save key</button>
-          </div>
-          <div className="system-status"><i /><div><strong>All systems operational</strong><span>Last checked just now</span></div></div>
           <div className="profile"><div className="avatar">AK</div><div><strong>Ali Khan</strong><span>Administrator</span></div><button>•••</button></div>
         </div>
       </aside>
@@ -97,7 +76,7 @@ const SLOT_LABELS: Record<ModelSlot, string> = {
   equipment: "Equipment",
 };
 
-function ModelsPage({ toast, adminKey }: { toast: (s: string) => void; adminKey: string }) {
+function ModelsPage({ toast }: { toast: (s: string) => void }) {
   const [file, setFile] = useState<File | null>(null);
   const [slot, setSlot] = useState<ModelSlot>("exercise-rep");
   const [models, setModels] = useState<ModelInfo[]>([]);
@@ -170,7 +149,7 @@ function ModelsPage({ toast, adminKey }: { toast: (s: string) => void; adminKey:
             </div>
           </article>;
         })}
-        <div className="replacement-note"><ShieldCheck/><div><strong>Backend storage</strong><span>Uploads go to <code>weights/</code> on the FastAPI server. Set your admin key in the sidebar before uploading.</span></div></div>
+        <div className="replacement-note"><ShieldCheck/><div><strong>Backend storage</strong><span>Uploads go to <code>weights/</code> on the FastAPI server.</span></div></div>
       </section>
     </div>
   </>;
