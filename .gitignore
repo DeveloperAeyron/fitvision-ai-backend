@@ -47,3 +47,4 @@ admin-panel/out/
 !admin-panel/package.json
 !admin-panel/package-lock.json
 !admin-panel/tsconfig.json
+!admin-panel/vercel.json
