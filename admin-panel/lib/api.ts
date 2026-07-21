@@ -39,7 +39,7 @@ export type ConfigResponse = {
 export type ConfigMeta = {
   key: string;
   filename: string;
-  size_bytes: number;
+  size_bytes?: number;
   lastModifiedAt: string | null;
 };
 
