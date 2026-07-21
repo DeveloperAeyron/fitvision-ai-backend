@@ -2,14 +2,14 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import {
-  ArrowRight, Barbell, Bell, Brain, Check, DownloadSimple, FileArrowUp, ForkKnife, Gauge, Key,
-  ListChecks, MagnifyingGlass, Plus, RocketLaunch, ShieldCheck, SidebarSimple, Sparkle,
-  SquaresFour, UploadSimple, X,
+  ArrowRight, Barbell, Bell, Brain, Check, DownloadSimple, FileArrowUp, ForkKnife, Key,
+  ListChecks, MagnifyingGlass, ShieldCheck, SidebarSimple, Sparkle, SquaresFour,
+  UploadSimple, X,
 } from "@phosphor-icons/react";
-import { meals, models } from "@/lib/data";
 import ExercisesPage from "@/components/ExercisesPage";
 import MealPlansPage from "@/components/MealPlansPage";
 import MealsPage from "@/components/MealsPage";
+import OverviewPage from "@/components/OverviewPage";
 import {
   downloadModel, fetchModels, formatBytes, getAdminKey, setAdminKey, uploadModel,
   type ModelInfo,
@@ -44,7 +44,9 @@ export default function AdminShell() {
   };
 
   const renderPage = () => {
-    if (active === "Overview") return <Overview toast={toast} />;
+    if (active === "Overview") {
+      return <OverviewPage toast={toast} onNavigate={setActive} />;
+    }
     if (active === "Exercises") return <ExercisesPage toast={toast} />;
     if (active === "Models") return <ModelsPage toast={toast} adminKey={adminKey} />;
     if (active === "Meals") return <MealsPage toast={toast} />;
@@ -174,25 +176,13 @@ function ModelsPage({ toast, adminKey }: { toast: (s: string) => void; adminKey:
   </>;
 }
 
-function Overview({toast}: {toast: (s:string)=>void}) {
-  return <>
-    <div className="page-title"><div><span className="eyebrow">Tuesday, July 21</span><h1>Good afternoon, Ali.</h1><p>Here’s what’s happening across FitVision today.</p></div><div className="title-actions"><button className="secondary" onClick={() => toast("Open Models to upload") }><UploadSimple/>Upload model</button><button className="primary" onClick={() => toast("Open Meal plans to edit configs")}><Plus weight="bold"/>Edit meal plans</button></div></div>
-    <section className="metrics">
-      <Metric icon={<Brain/>} tone="violet" label="Active models" value="2" change="Backend slots" />
-      <Metric icon={<ForkKnife/>} tone="green" label="Meal configs" value="4" change="JSON-driven" />
-      <Metric icon={<Gauge/>} tone="orange" label="Avg. inference" value="148ms" change="8.2% faster" />
-      <Metric icon={<ListChecks/>} tone="blue" label="Plan templates" value="3" change="loss / gain / general" />
-    </section>
-    <div className="grid-main">
-      <section className="card models-card"><CardHead title="Model health" subtitle="Production performance over the last 24 hours" action="Manage models"/><div className="model-list">{models.map((m, i) => <div className="model-row" key={m.name}><div className={`model-icon m${i}`}><Brain weight="fill"/></div><div className="model-name"><strong>{m.name}</strong><span>{m.version} · {m.task}</span></div><div className="model-stat"><span>Accuracy</span><strong>{m.accuracy}</strong></div><div className="model-stat"><span>Latency</span><strong>{m.latency}</strong></div><span className={`pill ${m.status.toLowerCase()}`}><i/>{m.status}</span><button className="row-more">•••</button></div>)}</div></section>
-      <section className="card activity"><CardHead title="Recent activity" subtitle="Latest workspace changes"/><div className="timeline"><Activity icon={<RocketLaunch/>} tone="violet" title="Meal plan configs moved to JSON" meta="Admin panel · Today"/><Activity icon={<ForkKnife/>} tone="green" title="Alternative meals editable" meta="Admin panel · Today"/><Activity icon={<ShieldCheck/>} tone="blue" title="Admin API connected" meta="Backend · Today"/></div><button className="text-action">View audit log <ArrowRight/></button></section>
+function CardHead({ title, subtitle }: { title: string; subtitle: string }) {
+  return (
+    <div className="card-head">
+      <div>
+        <h2>{title}</h2>
+        <p>{subtitle}</p>
+      </div>
     </div>
-    <div className="grid-bottom">
-      <section className="card"><CardHead title="Meals library" subtitle="Recently added and updated" action="View all meals"/><div className="meal-list">{meals.map((m, i) => <div className="meal-row" key={m.name}><div className={`meal-thumb food${i}`}>{m.image}</div><div><strong>{m.name}</strong><span>{m.category} · {m.calories} kcal · {m.protein} protein</span></div><span className={`pill ${m.status.toLowerCase()}`}>{m.status}</span></div>)}</div></section>
-    </div>
-  </>
+  );
 }
-
-function Metric({icon,tone,label,value,change}:{icon:React.ReactNode,tone:string,label:string,value:string,change:string}) { return <div className="metric card"><div className={`metric-icon ${tone}`}>{icon}</div><div><span>{label}</span><strong>{value}</strong><small>{change}</small></div><div className="spark">▁▂▂▃▅▄▆▇</div></div> }
-function CardHead({title,subtitle,action}:{title:string,subtitle:string,action?:string}) { return <div className="card-head"><div><h2>{title}</h2><p>{subtitle}</p></div>{action && <button>{action}<ArrowRight/></button>}</div> }
-function Activity({icon,tone,title,meta}:{icon:React.ReactNode,tone:string,title:string,meta:string}) { return <div className="activity-row"><div className={`activity-icon ${tone}`}>{icon}</div><div><strong>{title}</strong><span>{meta}</span></div></div> }
