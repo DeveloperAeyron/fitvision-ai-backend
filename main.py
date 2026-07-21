@@ -17,6 +17,7 @@ from api.routes import router as count_reps_router
 from api.auth_routes import router as auth_router
 from api.exercise_routes import router as exercise_router
 from api.dashboard_routes import router as dashboard_router
+from api.admin_routes import router as admin_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -135,6 +136,7 @@ app.include_router(count_reps_router)
 app.include_router(auth_router)
 app.include_router(exercise_router)
 app.include_router(dashboard_router)
+app.include_router(admin_router)
 
 
 def _read_static(filename: str) -> HTMLResponse:

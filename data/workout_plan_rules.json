@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "exercises_per_day": 4,
+  "default_days": {
+    "loss": ["Monday", "Wednesday", "Friday"],
+    "gain": ["Monday", "Wednesday", "Friday"],
+    "general": ["Tuesday", "Thursday", "Saturday"]
+  },
+  "rules": {
+    "loss": {
+      "workout_name": "HIIT Fat Burner",
+      "duration_minutes": 35,
+      "equipment_filter": ["None", "Bodyweight", "Cardio"],
+      "sets": 3,
+      "reps_or_duration": "45 sec"
+    },
+    "gain": {
+      "workout_name": "Hypertrophy Power",
+      "duration_minutes": 50,
+      "equipment_exclude": ["None", "Bodyweight"],
+      "sets": 4,
+      "reps_or_duration": "15 reps"
+    },
+    "general": {
+      "workout_name": "General Health & Tone",
+      "duration_minutes": 40,
+      "sets": 3,
+      "reps_or_duration": "45 sec"
+    }
+  }
+}

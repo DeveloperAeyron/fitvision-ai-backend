@@ -1,0 +1,258 @@
+{
+  "version": 1,
+  "templates": {
+    "loss": {
+      "display_name": "Weight Loss",
+      "activity_calories": {
+        "sedentary": 1600,
+        "light": 1800,
+        "active": 2000
+      },
+      "macros": {
+        "protein": 135,
+        "carbs": 165,
+        "fats": 55,
+        "fiber": 30
+      },
+      "meals": [
+        {
+          "type": "Breakfast",
+          "time": "8:00 AM",
+          "name": "Egg White Omelet with Spinach",
+          "image_url": "https://images.unsplash.com/photo-1525351484163-7529414344d8?q=80&w=400&auto=format&fit=crop",
+          "ingredients": [
+            "3 egg whites",
+            "1 cup spinach",
+            "1 slice whole wheat toast",
+            "Olive oil spray"
+          ],
+          "steps": [
+            "Spray pan with olive oil.",
+            "Saut\u00e9 spinach until wilted.",
+            "Pour in egg whites and cook until set.",
+            "Serve with toast."
+          ],
+          "health_notes": "High protein, low calorie. Spinach provides excellent iron.",
+          "calories": 350,
+          "protein": 30,
+          "carbs": 25,
+          "fats": 10,
+          "fiber": 5
+        },
+        {
+          "type": "Lunch",
+          "time": "1:00 PM",
+          "name": "Grilled Chicken Salad",
+          "image_url": "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=400&auto=format&fit=crop",
+          "ingredients": [
+            "150g chicken breast",
+            "Mixed greens",
+            "Cherry tomatoes",
+            "Light vinaigrette"
+          ],
+          "steps": [
+            "Grill chicken breast until cooked through.",
+            "Chop greens and tomatoes.",
+            "Toss together with vinaigrette."
+          ],
+          "health_notes": "Lean protein and high volume veggies keep you full.",
+          "calories": 550,
+          "protein": 45,
+          "carbs": 30,
+          "fats": 15,
+          "fiber": 8
+        },
+        {
+          "type": "Dinner",
+          "time": "7:00 PM",
+          "name": "Baked White Fish & Quinoa",
+          "image_url": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?q=80&w=400&auto=format&fit=crop",
+          "ingredients": [
+            "150g white fish",
+            "1/2 cup cooked quinoa",
+            "Steamed broccoli"
+          ],
+          "steps": [
+            "Bake fish at 400F for 15 mins.",
+            "Steam broccoli.",
+            "Serve over warm quinoa."
+          ],
+          "health_notes": "Light easily digestible protein for the evening.",
+          "calories": 700,
+          "protein": 60,
+          "carbs": 110,
+          "fats": 30,
+          "fiber": 17
+        }
+      ]
+    },
+    "gain": {
+      "display_name": "Muscle Gain",
+      "activity_calories": {
+        "sedentary": 2400,
+        "light": 2700,
+        "active": 3000
+      },
+      "macros": {
+        "protein": 160,
+        "carbs": 350,
+        "fats": 80,
+        "fiber": 35
+      },
+      "meals": [
+        {
+          "type": "Breakfast",
+          "time": "8:00 AM",
+          "name": "Protein Oatmeal",
+          "image_url": "https://images.unsplash.com/photo-1517673132405-a56a62b18caf?q=80&w=400&auto=format&fit=crop",
+          "ingredients": [
+            "1 cup oats",
+            "2 scoops whey protein",
+            "1 tbsp peanut butter",
+            "1 banana"
+          ],
+          "steps": [
+            "Cook oats with water or milk.",
+            "Stir in protein powder while warm.",
+            "Top with sliced banana and peanut butter."
+          ],
+          "health_notes": "Dense calories for muscle building and energy.",
+          "calories": 700,
+          "protein": 45,
+          "carbs": 80,
+          "fats": 20,
+          "fiber": 10
+        },
+        {
+          "type": "Lunch",
+          "time": "1:00 PM",
+          "name": "Beef & Rice Bowl",
+          "image_url": "https://images.unsplash.com/photo-1543339308-43e59d6b73a6?q=80&w=400&auto=format&fit=crop",
+          "ingredients": [
+            "200g lean beef mince",
+            "1.5 cups jasmine rice",
+            "Green beans",
+            "Soy sauce"
+          ],
+          "steps": [
+            "Brown beef in a skillet.",
+            "Steam rice and beans.",
+            "Combine and drizzle with soy sauce."
+          ],
+          "health_notes": "High carbs to replenish glycogen post-workout.",
+          "calories": 900,
+          "protein": 55,
+          "carbs": 130,
+          "fats": 25,
+          "fiber": 10
+        },
+        {
+          "type": "Dinner",
+          "time": "7:00 PM",
+          "name": "Grilled Salmon & Sweet Potato",
+          "image_url": "https://images.unsplash.com/photo-1467003909585-2f8a72700288?q=80&w=400&auto=format&fit=crop",
+          "ingredients": [
+            "200g salmon filet",
+            "1 large sweet potato",
+            "Roasted asparagus"
+          ],
+          "steps": [
+            "Grill salmon for 10 mins.",
+            "Bake sweet potato until soft.",
+            "Roast asparagus with a pinch of salt."
+          ],
+          "health_notes": "Rich in omega-3s for joint health and recovery.",
+          "calories": 800,
+          "protein": 60,
+          "carbs": 140,
+          "fats": 35,
+          "fiber": 15
+        }
+      ]
+    },
+    "general": {
+      "display_name": "General Health",
+      "activity_calories": {
+        "sedentary": 1800,
+        "light": 2100,
+        "active": 2400
+      },
+      "macros": {
+        "protein": 120,
+        "carbs": 260,
+        "fats": 60,
+        "fiber": 28
+      },
+      "meals": [
+        {
+          "type": "Breakfast",
+          "time": "8:00 AM",
+          "name": "Greek Yogurt Bowl",
+          "image_url": "https://images.unsplash.com/photo-1493770348161-369560ae357d?q=80&w=400&auto=format&fit=crop",
+          "ingredients": [
+            "1 cup Greek yogurt",
+            "1 tbsp honey",
+            "Chia seeds",
+            "Mixed berries"
+          ],
+          "steps": [
+            "Scoop yogurt into a bowl.",
+            "Top with berries and seeds.",
+            "Drizzle with honey."
+          ],
+          "health_notes": "Probiotics for gut health.",
+          "calories": 400,
+          "protein": 25,
+          "carbs": 50,
+          "fats": 10,
+          "fiber": 8
+        },
+        {
+          "type": "Lunch",
+          "time": "1:00 PM",
+          "name": "Turkey Breast Wrap",
+          "image_url": "https://images.unsplash.com/photo-1626804475297-41607ea0d5eb?q=80&w=400&auto=format&fit=crop",
+          "ingredients": [
+            "Whole wheat tortilla",
+            "Sliced turkey breast",
+            "Avocado",
+            "Lettuce and tomato"
+          ],
+          "steps": [
+            "Lay tortilla flat.",
+            "Layer turkey, avocado, and veggies.",
+            "Roll tightly and slice in half."
+          ],
+          "health_notes": "Balanced macronutrients for sustained midday energy.",
+          "calories": 600,
+          "protein": 40,
+          "carbs": 80,
+          "fats": 20,
+          "fiber": 10
+        },
+        {
+          "type": "Dinner",
+          "time": "7:00 PM",
+          "name": "Chicken & Mediterranean Veggies",
+          "image_url": "https://images.unsplash.com/photo-1532550907401-a500c9a57435?q=80&w=400&auto=format&fit=crop",
+          "ingredients": [
+            "150g chicken breast",
+            "Zucchini",
+            "Bell peppers",
+            "Olive oil"
+          ],
+          "steps": [
+            "Chop veggies and toss in olive oil.",
+            "Roast alongside chicken at 400F for 25 mins."
+          ],
+          "health_notes": "Rich in vitamins and antioxidants.",
+          "calories": 800,
+          "protein": 55,
+          "carbs": 130,
+          "fats": 30,
+          "fiber": 10
+        }
+      ]
+    }
+  }
+}

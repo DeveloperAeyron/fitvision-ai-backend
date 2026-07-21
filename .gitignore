@@ -1,14 +1,45 @@
+# Python
 venv/
-__pycache__/
-.virtual_documents/
-uploads/
-outputs/
-*.mp4
-raw_videos/
-*.json
 .venv
 fitvisionvenv/
-postgres-portable/
-postgres-data/
-pg_server.log
+__pycache__/
+.virtual_documents/
+*.pyc
+
+# Environment & secrets
 .env
+.env.local
+.env*.local
+
+# Runtime / generated
+uploads/
+outputs/
+postgres-data/
+postgres-portable/
+pg_server.log
+
+# Media
+*.mp4
+raw_videos/
+
+# Model weights & large binaries
+weights/
+*.pt
+*.pth
+*.keras
+*.tflite
+*.task
+*.pkl
+TCN-exercise.pt
+
+# Admin panel build artifacts
+admin-panel/node_modules/
+admin-panel/.next/
+admin-panel/out/
+
+# Ignore loose JSON dumps; keep project config
+*.json
+!data/**/*.json
+!admin-panel/package.json
+!admin-panel/package-lock.json
+!admin-panel/tsconfig.json
