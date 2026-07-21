@@ -972,10 +972,8 @@ def to_goal_response(model: UserGoal, workouts_current: int, reps_current: int, 
             pass
     
     if not w_plan:
-        w_plan, n_plan = generate_workout_and_nutrition_plans(
-            model.fitness_goal or "General Health",
-            model.activity_level or "Active"
-        )
+        w_plan = []
+        n_plan = {}
 
     w_pct = (workouts_current / model.target_workouts) if model.target_workouts > 0 else 0
     r_pct = (reps_current / model.target_reps) if model.target_reps > 0 else 0
@@ -1031,8 +1029,8 @@ async def create_user_goal(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    workout_plan, nutrition_plan = generate_workout_and_nutrition_plans(
-        request.fitness_goal, request.activity_level, request.days
+    workout_plan, nutrition_plan = await generate_workout_and_nutrition_plans(
+        request.fitness_goal, request.activity_level, db, request.days
     )
 
     w_str = json.dumps(workout_plan)
@@ -1072,8 +1070,8 @@ async def create_user_meal(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    _, nutrition_plan = generate_workout_and_nutrition_plans(
-        request.fitness_goal, request.activity_level
+    _, nutrition_plan = await generate_workout_and_nutrition_plans(
+        request.fitness_goal, request.activity_level, db
     )
 
     n_str = json.dumps(nutrition_plan)
@@ -1225,8 +1223,8 @@ async def generate_meal_plan_for_goal(
         raise HTTPException(status_code=404, detail="Goal not found")
         
     if not user_goal.nutrition_plan:
-        _, nutrition_plan = generate_workout_and_nutrition_plans(
-            user_goal.fitness_goal, user_goal.activity_level
+        _, nutrition_plan = await generate_workout_and_nutrition_plans(
+            user_goal.fitness_goal, user_goal.activity_level, db
         )
         user_goal.nutrition_plan = json.dumps(nutrition_plan)
         

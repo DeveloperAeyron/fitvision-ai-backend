@@ -164,6 +164,17 @@ class RepCounter:
             if bbox_ratio > 1.5:
                 return False
 
+        elif self.config.name == "pullup":
+            # Pullups require a highly vertical aspect ratio
+            if bbox_ratio < 1.5:
+                return False
+
+        elif self.config.name == "jumping_jack":
+            # Jumping jacks generally maintain a vertical body but aspect ratio changes heavily
+            # as limbs spread, so we just enforce it's not a horizontal pose
+            if bbox_ratio < 1.0:
+                return False
+
         return True
 
     def _extract_features(self, landmarks: Dict[str, Tuple[float, float, float]]) -> List[float]:
@@ -176,6 +187,10 @@ class RepCounter:
 
         left_hip = calculate_angle(landmarks["left_shoulder"], landmarks["left_hip"], landmarks["left_knee"]) if "left_shoulder" in landmarks and "left_hip" in landmarks and "left_knee" in landmarks else 180.0
         right_hip = calculate_angle(landmarks["right_shoulder"], landmarks["right_hip"], landmarks["right_knee"]) if "right_shoulder" in landmarks and "right_hip" in landmarks and "right_knee" in landmarks else 180.0
+
+        # Shoulder abduction (arm raise)
+        left_shoulder_abd = calculate_angle(landmarks["left_hip"], landmarks["left_shoulder"], landmarks["left_elbow"]) if "left_hip" in landmarks and "left_shoulder" in landmarks and "left_elbow" in landmarks else 180.0
+        right_shoulder_abd = calculate_angle(landmarks["right_hip"], landmarks["right_shoulder"], landmarks["right_elbow"]) if "right_hip" in landmarks and "right_shoulder" in landmarks and "right_elbow" in landmarks else 180.0
 
         # Bounding box aspect ratio
         important_landmarks = [
@@ -206,6 +221,8 @@ class RepCounter:
             "right_knee": right_knee,
             "left_hip": left_hip,
             "right_hip": right_hip,
+            "left_shoulder_abd": left_shoulder_abd,
+            "right_shoulder_abd": right_shoulder_abd,
             "bbox_ratio": bbox_ratio
         }
 

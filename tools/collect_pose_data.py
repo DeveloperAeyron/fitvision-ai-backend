@@ -49,12 +49,17 @@ def extract_features(landmarks):
     left_hip = calculate_angle(landmarks["left_shoulder"], landmarks["left_hip"], landmarks["left_knee"]) if "left_shoulder" in landmarks and "left_hip" in landmarks and "left_knee" in landmarks else 180.0
     right_hip = calculate_angle(landmarks["right_shoulder"], landmarks["right_hip"], landmarks["right_knee"]) if "right_shoulder" in landmarks and "right_hip" in landmarks and "right_knee" in landmarks else 180.0
 
+    # Shoulder abduction
+    left_shoulder_abd = calculate_angle(landmarks["left_hip"], landmarks["left_shoulder"], landmarks["left_elbow"]) if "left_hip" in landmarks and "left_shoulder" in landmarks and "left_elbow" in landmarks else 180.0
+    right_shoulder_abd = calculate_angle(landmarks["right_hip"], landmarks["right_shoulder"], landmarks["right_elbow"]) if "right_hip" in landmarks and "right_shoulder" in landmarks and "right_elbow" in landmarks else 180.0
+
     bbox_ratio = calculate_bbox_ratio(landmarks)
 
     return [
         left_elbow, right_elbow,
         left_knee, right_knee,
         left_hip, right_hip,
+        left_shoulder_abd, right_shoulder_abd,
         bbox_ratio
     ]
 
@@ -70,6 +75,7 @@ def main():
         "left_elbow", "right_elbow",
         "left_knee", "right_knee",
         "left_hip", "right_hip",
+        "left_shoulder_abd", "right_shoulder_abd",
         "bbox_ratio",
         "exercise_label", "state_label"
     ]
@@ -78,7 +84,7 @@ def main():
         writer = csv.writer(f)
         writer.writerow(fieldnames)
 
-        exercises = ["pushup", "squat", "situp"]
+        exercises = ["pushup", "squat", "situp", "pullup", "jumping_jack"]
         for exercise in exercises:
             folder_path = os.path.join(dataset_dir, exercise)
             if not os.path.exists(folder_path):
@@ -116,7 +122,7 @@ def main():
                         features = extract_features(landmarks_dict)
 
                         # Auto-label based on joint angles
-                        left_el, right_el, left_kn, right_kn, left_hp, right_hp, bbox_ratio = features
+                        left_el, right_el, left_kn, right_kn, left_hp, right_hp, left_sh_abd, right_sh_abd, bbox_ratio = features
                         state_label = "transition"
 
                         # Simple rule-based labeling bootstrap
@@ -138,6 +144,19 @@ def main():
                                 state_label = "up"
                               # Situps require flexion (e.g. angle around 60-90)
                             elif avg_hip < 100.0:
+                                state_label = "down"
+                        elif exercise == "pullup":
+                            avg_elbow = (left_el + right_el) / 2.0
+                            if avg_elbow < 90.0:
+                                state_label = "up"
+                            elif avg_elbow > 150.0:
+                                state_label = "down"
+                        elif exercise == "jumping_jack":
+                            # Use shoulder abduction (index 6 and 7 in features list)
+                            avg_shoulder_abd = (features[6] + features[7]) / 2.0
+                            if avg_shoulder_abd > 150.0:
+                                state_label = "up"
+                            elif avg_shoulder_abd < 50.0:
                                 state_label = "down"
 
                         writer.writerow(features + [exercise, state_label])

@@ -61,6 +61,39 @@ EXERCISES = {
         ],
         min_range=30.0,
     ),
+    "pullup": ExerciseConfig(
+        name="pullup",
+        triplets=[
+            ("left_shoulder", "left_elbow", "left_wrist"),
+            ("right_shoulder", "right_elbow", "right_wrist"),
+        ],
+        min_range=15.0,
+        enter_frac=0.5,
+        exit_frac=0.5,
+    ),
+    "jumping_jack": ExerciseConfig(
+        name="jumping_jack",
+        triplets=[
+            ("left_hip", "left_shoulder", "left_elbow"),
+            ("right_hip", "right_shoulder", "right_elbow"),
+        ],
+        min_range=20.0,
+        enter_frac=0.5,
+        exit_frac=0.5,
+    ),
+    "lunge": ExerciseConfig(
+        name="lunge",
+        triplets=[
+            ("left_hip", "left_knee", "left_ankle"),
+            ("right_hip", "right_knee", "right_ankle"),
+        ],
+        metric="angle",
+        flexion="decreasing",
+        min_range=25.0,
+        enter_frac=0.4,
+        exit_frac=0.4,
+        smooth_window=7,
+    ),
 }
 
 

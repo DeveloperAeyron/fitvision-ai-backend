@@ -11,6 +11,8 @@ EXERCISE_FEATURES = {
     "pushup": ["left_elbow", "right_elbow", "bbox_ratio"],
     "squat": ["left_knee", "right_knee", "left_hip", "right_hip", "bbox_ratio"],
     "situp": ["left_hip", "right_hip", "bbox_ratio"],
+    "pullup": ["left_elbow", "right_elbow", "bbox_ratio"],
+    "jumping_jack": ["left_shoulder_abd", "right_shoulder_abd", "left_knee", "right_knee", "bbox_ratio"],
 }
 
 def main():
