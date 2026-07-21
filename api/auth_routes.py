@@ -17,6 +17,7 @@ import httpx
 import secrets
 
 from api.database import get_db
+from api.sync_routes import build_sync_catalog
 from api.models import User, PWDResetOTP, UserGoal, WorkoutLog, WorkoutLogEvent
 from api.schemas import (
     UserCreate,
@@ -1460,33 +1461,16 @@ async def update_user_profile(
     return UserResponse.model_validate(current_user)
 
 
-from sqlalchemy import func
-from api.models import Exercise
-
 @router.get("/sync/last-modified")
 async def get_last_modified(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    goal_res = await db.execute(
-        select(func.max(UserGoal.updated_at)).where(UserGoal.user_id == current_user.id)
-    )
-    max_goal_ts = goal_res.scalar()
-
-    log_res = await db.execute(
-        select(func.max(WorkoutLog.updated_at)).where(WorkoutLog.user_id == current_user.id)
-    )
-    max_log_ts = log_res.scalar()
-
-    ex_res = await db.execute(
-        select(func.max(Exercise.updated_at))
-    )
-    max_ex_ts = ex_res.scalar()
-
-    timestamps = [ts for ts in [current_user.created_at, max_goal_ts, max_log_ts, max_ex_ts] if ts is not None]
-    latest = max(timestamps) if timestamps else None
-    
-    return {"last_modified": latest.isoformat() if latest else None}
+    catalog = await build_sync_catalog(db)
+    return {
+        "last_modified": catalog["last_modified"],
+        "lastModifiedAt": catalog["lastModifiedAt"],
+    }
 
 
 @router.post("/contact")

@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import {
-  ArrowRight, Barbell, Brain, CheckCircle, ForkKnife, Gauge, ListChecks,
-  Plus, ShieldCheck, UploadSimple, WarningCircle,
+  ArrowRight, Barbell, Brain, CheckCircle, ForkKnife, ListChecks,
+  Plus, UploadSimple, WarningCircle,
 } from "@phosphor-icons/react";
 import {
-  fetchConfigList, fetchExercises, fetchModels, formatBytes,
-  type ConfigMeta, type ModelInfo,
+  fetchExercises, fetchModels, fetchSyncCatalog, formatBytes,
+  type ModelInfo, type SyncCatalog,
 } from "@/lib/api";
 import { BACKEND_URL } from "@/lib/backend";
 import { formatDateTime } from "@/lib/format";
@@ -37,7 +37,7 @@ type OverviewProps = {
 
 export default function OverviewPage({ toast, onNavigate }: OverviewProps) {
   const [models, setModels] = useState<ModelInfo[]>([]);
-  const [configs, setConfigs] = useState<ConfigMeta[]>([]);
+  const [syncCatalog, setSyncCatalog] = useState<SyncCatalog | null>(null);
   const [exerciseCount, setExerciseCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [backendOk, setBackendOk] = useState<boolean | null>(null);
@@ -48,14 +48,14 @@ export default function OverviewPage({ toast, onNavigate }: OverviewProps) {
     async function load() {
       setLoading(true);
       try {
-        const [modelResult, configResult, exercises] = await Promise.all([
+        const [modelResult, catalog, exercises] = await Promise.all([
           fetchModels(),
-          fetchConfigList(),
+          fetchSyncCatalog().catch(() => null),
           fetchExercises().catch(() => null),
         ]);
         if (cancelled) return;
         setModels(modelResult.models);
-        setConfigs(configResult.configs);
+        setSyncCatalog(catalog);
         setExerciseCount(exercises?.length ?? null);
         setBackendOk(exercises !== null);
       } catch {
@@ -190,60 +190,51 @@ export default function OverviewPage({ toast, onNavigate }: OverviewProps) {
               meta={backendOk ? `Connected · ${BACKEND_URL}` : `Unreachable · ${BACKEND_URL}`}
             />
             <StatusRow
+              ok={Boolean(syncCatalog)}
+              title="Sync catalog"
+              meta={syncCatalog
+                ? `GET /sync/catalog · latest ${formatDateTime(syncCatalog.lastModifiedAt)}`
+                : `Unavailable · ${BACKEND_URL}`}
+            />
+            <StatusRow
               ok
               title="Meal plan configs"
-              meta={`${configs.length || CONFIG_KEYS.length} JSON files · latest ${formatDateTime(
-                configs.reduce<string | null>((latest, cfg) => {
-                  if (!cfg.lastModifiedAt) return latest;
-                  if (!latest || cfg.lastModifiedAt > latest) return cfg.lastModifiedAt;
-                  return latest;
-                }, null),
-              )}`}
+              meta={`${CONFIG_KEYS.length} JSON files tracked in sync catalog`}
             />
           </div>
           <div className="overview-endpoints">
-            <strong>Live endpoints</strong>
-            <code>POST /count-reps</code>
-            <code>POST /detect-equipment</code>
-            <code>GET /exercises</code>
+            <strong>Mobile sync</strong>
+            <code>GET /sync/catalog</code>
+            {syncCatalog?.resources.slice(0, 4).map((r) => (
+              <code key={r.key}>{r.apis[0]}</code>
+            ))}
           </div>
         </section>
       </div>
 
       <div className="grid-bottom">
-        <section className="card">
+        <section className="card sync-catalog-card">
           <CardHead
-            title="Recent updates"
-            subtitle="Latest changes in this workspace"
-            action="View exercises"
-            onAction={() => onNavigate("Exercises")}
+            title="Sync catalog"
+            subtitle="Public API for mobile — each resource with its lastModifiedAt"
           />
-          <div className="timeline">
-            <Activity
-              icon={<Brain />}
-              tone="violet"
-              title="TCN rep counter integrated"
-              meta="Exercise Rep · TCN-exercise.pt · Today"
-            />
-            <Activity
-              icon={<Gauge />}
-              tone="orange"
-              title="Equipment YOLO detector live"
-              meta="Equipment-detection.pt · /detect-equipment · Today"
-            />
-            <Activity
-              icon={<ForkKnife />}
-              tone="green"
-              title="Meal configs moved to JSON"
-              meta="Admin panel · editable without backend"
-            />
-            <Activity
-              icon={<ShieldCheck />}
-              tone="blue"
-              title="Production backend connected"
-              meta={`Exercises API · ${BACKEND_URL}`}
-            />
-          </div>
+          {loading ? (
+            <div className="config-loading">Loading sync catalog…</div>
+          ) : syncCatalog ? (
+            <div className="sync-catalog-list">
+              {syncCatalog.resources.map((resource) => (
+                <div className="sync-catalog-row" key={resource.key}>
+                  <div>
+                    <strong>{resource.label}</strong>
+                    <span>{resource.apis.join(" · ")}</span>
+                  </div>
+                  <span className="sync-modified">{formatDateTime(resource.lastModifiedAt)}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="config-loading">Sync catalog unavailable — is the backend running?</div>
+          )}
         </section>
 
         <section className="card overview-quick">
@@ -317,25 +308,6 @@ function CardHead({
           {action}<ArrowRight />
         </button>
       )}
-    </div>
-  );
-}
-
-function Activity({
-  icon, tone, title, meta,
-}: {
-  icon: React.ReactNode;
-  tone: string;
-  title: string;
-  meta: string;
-}) {
-  return (
-    <div className="activity-row">
-      <div className={`activity-icon ${tone}`}>{icon}</div>
-      <div>
-        <strong>{title}</strong>
-        <span>{meta}</span>
-      </div>
     </div>
   );
 }

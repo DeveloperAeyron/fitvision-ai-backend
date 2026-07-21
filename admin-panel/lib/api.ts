@@ -61,6 +61,30 @@ export async function fetchConfigList() {
   return localFetch<{ configs: ConfigMeta[] }>("/api/config");
 }
 
+export type SyncResource = {
+  key: string;
+  label: string;
+  apis: string[];
+  source: string;
+  lastModifiedAt: string | null;
+  filename?: string | null;
+};
+
+export type SyncCatalog = {
+  lastModifiedAt: string | null;
+  last_modified: string | null;
+  resources: SyncResource[];
+};
+
+export async function fetchSyncCatalog() {
+  const response = await fetch("/api/sync", { cache: "no-store" });
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new Error(body.detail ?? "Failed to load sync catalog");
+  }
+  return response.json() as Promise<SyncCatalog>;
+}
+
 export async function uploadConfigFile(configKey: string, file: File) {
   const form = new FormData();
   form.append("file", file);
