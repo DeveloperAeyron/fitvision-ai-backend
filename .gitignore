@@ -22,15 +22,19 @@ pg_server.log
 *.mp4
 raw_videos/
 
-# Model weights & large binaries
-weights/
+# Model weights & large binaries (track only the two production .pt files)
+weights/*
+!weights/Equipment-detection.pt
+!weights/TCN-exercise.pt
 *.pt
+!weights/Equipment-detection.pt
+!weights/TCN-exercise.pt
 *.pth
 *.keras
 *.tflite
 *.task
 *.pkl
-TCN-exercise.pt
+/TCN-exercise.pt
 
 # Admin panel build artifacts
 admin-panel/node_modules/
