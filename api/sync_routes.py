@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import FileResponse
 from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -78,12 +79,17 @@ SYNC_RESOURCES: list[dict] = [
 ]
 
 
-def _model_mtime(slot: str) -> datetime | None:
+def _model_path(slot: str):
     meta = MODEL_SLOTS.get(slot)
     if not meta:
         return None
     path = ROOT_DIR / meta["path"]
-    if not path.exists():
+    return path if path.exists() else None
+
+
+def _model_mtime(slot: str) -> datetime | None:
+    path = _model_path(slot)
+    if path is None:
         return None
     return datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc)
 
@@ -135,7 +141,13 @@ async def build_sync_catalog(db: AsyncSession) -> dict:
         if source == "config":
             entry["filename"] = CONFIG_FILES.get(spec["config_key"])
         elif source == "model":
-            entry["filename"] = MODEL_SLOTS.get(spec["model_slot"], {}).get("filename")
+            slot = spec["model_slot"]
+            meta = MODEL_SLOTS.get(slot, {})
+            entry["filename"] = meta.get("filename")
+            entry["downloadUrl"] = f"/sync/models/{slot}/download"
+            model_path = _model_path(slot)
+            if model_path is not None:
+                entry["sizeBytes"] = model_path.stat().st_size
 
         resources.append(entry)
 
@@ -153,3 +165,21 @@ async def build_sync_catalog(db: AsyncSession) -> dict:
 async def get_sync_catalog(db: AsyncSession = Depends(get_db)):
     """Return every admin-editable resource with its public API paths and lastModifiedAt."""
     return await build_sync_catalog(db)
+
+
+@router.get("/models/{slot}/download")
+async def download_sync_model(slot: str):
+    """Public model download for mobile offline sync."""
+    if slot not in MODEL_SLOTS:
+        raise HTTPException(status_code=404, detail="Unknown model slot")
+
+    meta = MODEL_SLOTS[slot]
+    path = _model_path(slot)
+    if path is None:
+        raise HTTPException(status_code=404, detail="Model file not found")
+
+    return FileResponse(
+        path,
+        media_type="application/octet-stream",
+        filename=meta["filename"],
+    )

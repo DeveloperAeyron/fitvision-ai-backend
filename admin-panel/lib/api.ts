@@ -68,6 +68,8 @@ export type SyncResource = {
   source: string;
   lastModifiedAt: string | null;
   filename?: string | null;
+  downloadUrl?: string | null;
+  sizeBytes?: number | null;
 };
 
 export type SyncCatalog = {

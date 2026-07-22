@@ -227,6 +227,9 @@ export default function OverviewPage({ toast, onNavigate }: OverviewProps) {
                   <div>
                     <strong>{resource.label}</strong>
                     <span>{resource.apis.join(" · ")}</span>
+                    {resource.downloadUrl ? (
+                      <span>{resource.downloadUrl}{resource.sizeBytes ? ` · ${formatBytes(resource.sizeBytes)}` : ""}</span>
+                    ) : null}
                   </div>
                   <span className="sync-modified">{formatDateTime(resource.lastModifiedAt)}</span>
                 </div>
