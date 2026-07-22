@@ -29,5 +29,8 @@ class Settings:
     uploads_dir: Path = ROOT_DIR / "uploads"
     static_dir: Path = ROOT_DIR / "static"
 
+    # Public URL for absolute download links in /sync/catalog (set PUBLIC_BASE_URL in env).
+    public_base_url: str = os.getenv("PUBLIC_BASE_URL", "https://fitvision.medaide.org")
+
 
 settings = Settings()

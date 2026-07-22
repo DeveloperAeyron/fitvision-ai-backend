@@ -4,8 +4,10 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import FileResponse
+
+from app.config import settings
 from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -112,7 +114,21 @@ async def _exercises_mtime(db: AsyncSession) -> datetime | None:
     return result.scalar()
 
 
-async def build_sync_catalog(db: AsyncSession) -> dict:
+def resolve_public_base_url(request: Request | None = None) -> str:
+    configured = settings.public_base_url.strip().rstrip("/")
+    if configured:
+        return configured
+    if request is not None:
+        return str(request.base_url).rstrip("/")
+    return "https://fitvision.medaide.org"
+
+
+def _absolute_download_url(base_url: str, path: str) -> str:
+    return f"{base_url.rstrip('/')}/{path.lstrip('/')}"
+
+
+async def build_sync_catalog(db: AsyncSession, *, base_url: str | None = None) -> dict:
+    base = (base_url or resolve_public_base_url()).rstrip("/")
     exercises_ts = await _exercises_mtime(db)
     resources: list[dict] = []
     all_times: list[datetime] = []
@@ -144,7 +160,9 @@ async def build_sync_catalog(db: AsyncSession) -> dict:
             slot = spec["model_slot"]
             meta = MODEL_SLOTS.get(slot, {})
             entry["filename"] = meta.get("filename")
-            entry["downloadUrl"] = f"/sync/models/{slot}/download"
+            entry["downloadUrl"] = _absolute_download_url(
+                base, f"sync/models/{slot}/download"
+            )
             model_path = _model_path(slot)
             if model_path is not None:
                 entry["sizeBytes"] = model_path.stat().st_size
@@ -162,9 +180,12 @@ async def build_sync_catalog(db: AsyncSession) -> dict:
 
 
 @router.get("/catalog")
-async def get_sync_catalog(db: AsyncSession = Depends(get_db)):
+async def get_sync_catalog(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
     """Return every admin-editable resource with its public API paths and lastModifiedAt."""
-    return await build_sync_catalog(db)
+    return await build_sync_catalog(db, base_url=resolve_public_base_url(request))
 
 
 @router.get("/models/{slot}/download")
